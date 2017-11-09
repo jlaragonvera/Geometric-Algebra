@@ -164,11 +164,8 @@ Grade[x_ + y_, r_?NumberQ] := Grade[x, r] + Grade[y, r]
 Grade[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], r_?NumberQ] := If[Length[{i}] === r, a e[i], 0]
 
 (* OuterProduct returns the outer product between two or more multivectors *)
-(* Kondo et al. w[] expressions are used *)
 OuterProduct[_] := $Failed
 OuterProduct[x_, y_] :=  OuterProduct[Expand[x], Expand[y]]   /;  x =!= Expand[x] || y =!= Expand[y]
-(* OuterProduct[e[0], e[\[Infinity]]] := -1 - e[0, \[Infinity]] *)
-(* OuterProduct[e[\[Infinity]], e[0]] :=  1 + e[0, \[Infinity]] *)
 OuterProduct[e[i_ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}],e[j_ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]]]] := Expand[(GeometricProduct[e[i],e[j]] - GeometricProduct[e[j],e[i]])/2]
 OuterProduct[x_, y_, z__] := Fold[OuterProduct, x, {y, z}] // Simplify
 OuterProduct[x_, y_ + z_] := OuterProduct[x, y] + OuterProduct[x, z]
@@ -181,7 +178,7 @@ OuterProduct[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], (b_: 1) 
 
 (* InnerProduct returns the inner product between two or more multivectors
    Dorst, Fontijne and Mann definition is used, that is no absolute value as in Hestenes
-   the of Kondo et al. w[] expressions makes the definition consistent with a Left Contraction *)
+*)
 InnerProduct[_] := $Failed
 InnerProduct[x_, y_] := InnerProduct[Expand[x], Expand[y]]                                    /;  x =!= Expand[x] || y =!= Expand[y]
 InnerProduct[x_, y_] := 1/2 (GeometricProduct[x, y] + GeometricProduct[y, x ])                /;  GradeQ[x, 1] && GradeQ[y, 1]
