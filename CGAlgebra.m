@@ -117,7 +117,7 @@ GradeQ[e[i__], r_?NumberQ] := If[Length[{i}] === r, True , False]
 GradeQ[(a_: 1) e[i__], r_?NumberQ]:= GradeQ[e[i], r]  /; FreeQ[a, e[_]] 
 GradeQ[x_Plus, r_?NumberQ] := And @@ (GradeQ[#, r] & /@ Apply[List, x])
 
-(* MultiplicationTable returns the multiplication table for Clifford e or Grassmann w products*)
+(* MultiplicationTable returns the multiplication table for Clifford products *)
 MultiplicationTable[e_] := Grid[Transpose[Insert[Transpose[Prepend[Table[e[i, j], {i,{0,1,2,3,\[Infinity]}}, {j, {0,1,2,3,\[Infinity]}}], 
       Table[e[i], {i,{0,1,2,3,\[Infinity]}}]]], {"",e[0],e[1],e[2],e[3],e[\[Infinity]]}, 1]], Frame -> All]
 
@@ -217,7 +217,6 @@ MultivectorInverse[x_] := Simplify[Reversion[x] / Magnitude[x]^2 ]      /; Magni
 (* I5 = pseudoscalar; I5i = the inverse of I5 *)
 I5 := G[0,1,2,3,\[Infinity]]
 I5i := MultivectorInverse[I5]
-(* I3 := OuterProduct[e[1], e[2], e[3]] *)
 
 (* Dual returns the dual of a multivector *)
 Dual[x_] := -InnerProduct[x, I5]
