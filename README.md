@@ -14,7 +14,7 @@ output is given in terms of geometric product of basis vectors.
         
 Examples:     
                        
-    The vector e_0 + 2 e_1 - a e_3 + e_\inty is written as
+    The vector e_0 + 2 e_1 - a e_3 + e_\infty is written as
               
          e[0] + 2 e[1] - a e[3] + e[\[Infinity]]
               
