@@ -12,12 +12,12 @@
    denoted by e[0], e[1], e[2], e[3], e[\[Infinity]]. Geometric products
    of basis elements are denoted as e[0,1,2] (=e_0 e_1 e_2), etc.
    
-   results of any calculations are given in terms of the geometric product
+   The results of any calculation is given in terms of the geometric product
    of basis elements, that is, the outer (Grassman) product of basis
    elements or multivectors is calculated by using OuterProduct[] and the
    output is given in terms of geometric product of basis vectors.
         
-   Examples:     The vector e_0 + 2 e_1 - a e_3 + e_\inty is written as
+   Examples:     The vector e_0 + 2 e_1 - a e_3 + e_\infty is written as
                   e[0] + 2 e[1] - a e[3] + e[\[Infinity]].
                      
                  The multivector a + 5 e_1 + e_1e_2e_3 is written as
