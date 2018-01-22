@@ -1,6 +1,7 @@
 # Geometric Algebra
 
 CGAlgebra.m 
+
 is a Mathematica package for the 5D Conformal Geometric Algebra.
 
 This package contains declarations for calculations with Conformal
@@ -28,6 +29,7 @@ https://arxiv.org/abs/1711.02513
 
 
 CliffordBasic.m
+
 is a completely renewed but reduced version of Clifford.m package by 
 G. Aragon-Camarasa, G. Aragon-Gonzalez, J.L. Aragon and 
 M.A. Rodriguez-Andrade:
