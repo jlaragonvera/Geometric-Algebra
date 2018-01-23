@@ -32,8 +32,7 @@ The geometric product
 
 yields:
 
-        a e[0] + 2 a e[1] + a e[\[Infinity]] + 5 e[0,1] -
-            5 e[1,\[Infinity]] + e[0,1,2,3] - e[1,2,3,\[Infinity]]
+        a e[0] + 2 a e[1] + a e[\[Infinity]] + 5 e[0,1] - 5 e[1,\[Infinity]] + e[0,1,2,3] - e[1,2,3,\[Infinity]]
 
 The inner product (left contraction)
 
@@ -79,8 +78,7 @@ The geometric product AB is calculated as
 
 yielding:
 
-        3 a e[2] - a^2 e[3] - 15 e[1,2] - a e[1,2] - 3 e[1,3] +
-        5 a e[1,3]
+        3 a e[2] - a^2 e[3] - 15 e[1,2] - a e[1,2] - 3 e[1,3] + 5 a e[1,3]
     
 which can be factored using
 
