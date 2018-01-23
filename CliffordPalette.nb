@@ -1,0 +1,182 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      5200,        172]
+NotebookOptionsPosition[      4184,        134]
+NotebookOutlinePosition[      5104,        169]
+CellTagsIndexPosition[      5061,        166]
+WindowFrame->Palette*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[GridBox[{
+   {
+    ButtonBox[
+     RowBox[{"<<", "\<\"clifford.m\"\>"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Dual", "[", 
+      RowBox[{"\[SelectionPlaceholder]", ",", "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GADraw", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GeometricCos", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GeometricExp", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GeometricPower", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GeometricProduct", "[", 
+      RowBox[{
+      "\[SelectionPlaceholder]", ",", "\[Placeholder]", ",", 
+       "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GeometricSin", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"GeometricTan", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Grade", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"InnerProduct", "[", 
+      RowBox[{
+      "\[SelectionPlaceholder]", ",", "\[Placeholder]", ",", 
+       "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Magnitude", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"MultivectorInverse", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"OuterProduct", "[", 
+      RowBox[{
+      "\[SelectionPlaceholder]", ",", "\[Placeholder]", ",", 
+       "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Pseudoscalar", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Reflection", "[", 
+      RowBox[{
+      "\[SelectionPlaceholder]", ",", "\[Placeholder]", ",", 
+       "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Rotation", "[", 
+      RowBox[{
+      "\[SelectionPlaceholder]", ",", "\[Placeholder]", ",", "\[Placeholder]",
+        ",", "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"ToBasis", "[", "\[SelectionPlaceholder]", "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"ToVector", "[", 
+      RowBox[{"\[SelectionPlaceholder]", ",", "\[Placeholder]"}], "]"}]]},
+   {
+    ButtonBox[
+     RowBox[{"Turn", "[", "\[SelectionPlaceholder]", "]"}]]}
+  },
+  GridBoxSpacings->{"Columns" -> {
+      Offset[0.27999999999999997`], {
+       Offset[0.]}, 
+      Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+      Offset[0.2], {
+       Offset[0.]}, 
+      Offset[0.2]}, "RowsIndexed" -> {}},
+  GridDefaultElement:>ButtonBox["\\[Placeholder]"]]], NotebookDefault,
+ CellMargins->{{Inherited, Inherited}, {5, Inherited}},
+ CellBracketOptions->{"Color"->RGBColor[0.269993, 0.308507, 0.6]},
+ Evaluatable->True,
+ CellGroupingRules->"InputGrouping",
+ CellHorizontalScrolling->True,
+ PageBreakAbove->True,
+ PageBreakWithin->False,
+ GroupPageBreakWithin->False,
+ CellLabelMargins->{{12, Inherited}, {Inherited, Inherited}},
+ DefaultFormatType->DefaultInputFormatType,
+ InputAutoReplacements->{
+  "->" -> "\[Rule]", ":>" -> "\[RuleDelayed]", "<=" -> "\[LessEqual]", ">=" -> 
+   "\[GreaterEqual]", "!=" -> "\[NotEqual]", "==" -> "\[Equal]", Inherited},
+ "TwoByteSyntaxCharacterAutoReplacement"->True,
+ HyphenationOptions->{"HyphenationCharacter"->"\[Continuation]"},
+ LineSpacing->{1.25, 0},
+ AutoItalicWords->{},
+ LanguageCategory->"Mathematica",
+ ScriptMinSize->9,
+ ShowStringCharacters->True,
+ NumberMarks->True,
+ LinebreakAdjustments->{0.85, 2, 10, 0, 1},
+ CounterIncrements->"Input",
+ StyleMenuListing->None,
+ FontFamily->"Courier",
+ FontWeight->"Bold",ExpressionUUID->"198a0c63-78a8-4f72-b560-5b0342bb52e0"]
+},
+ClosingAutoSave->True,
+Editable->False,
+WindowToolbars->{},
+PageWidth->448,
+WindowSize->{Fit, Fit},
+WindowMargins->{{58, Automatic}, {Automatic, 125}},
+WindowFrame->"Palette",
+WindowElements->{},
+WindowFrameElements->"CloseBox",
+WindowClickSelect->False,
+ScrollingOptions->{"VerticalScrollRange"->Fit},
+PrivateNotebookOptions->{"VersionedStylesheet"->{"Default.nb"[8.] -> False}},
+ShowCellBracket->False,
+CellMargins->{{0, 0}, {Inherited, 0}},
+Deployed->True,
+CellOpen->True,
+ShowCellLabel->False,
+ShowCellTags->False,
+ImageMargins->{{0, Inherited}, {Inherited, 0}},
+Magnification->1,
+FrontEndVersion->"11.2 for Mac OS X x86 (32-bit, 64-bit Kernel) (September \
+10, 2017)",
+StyleDefinitions->"Default.nb",
+ScrollingOptions -> {"PagewiseScrolling" -> True}
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[559, 20, 3621, 112, 467, NotebookDefault,ExpressionUUID->"198a0c63-78a8-4f72-b560-5b0342bb52e0",
+ Evaluatable->True,
+ CellGroupingRules->"InputGrouping",
+ PageBreakAbove->True,
+ PageBreakWithin->False,
+ CounterIncrements->"Input"]
+}
+]
+*)
+
+(* End of internal cache information *)
+
