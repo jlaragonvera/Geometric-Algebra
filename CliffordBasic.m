@@ -2,7 +2,7 @@
 
 (* Set up the Package Context. *)
 
-(* :Title: CliffordBasic.m -- Basic Clifford Algebra Calculator *)
+(* :Title: CliffordBasic0.m -- Basic Clifford Algebra Calculator *)
 
 (* :Author: Jose L. Aragon *)
 
@@ -55,7 +55,14 @@
     proposed by Alan Macdonald in "An Elementary Construction
     of Geometric Algebra". 
 
-	First version: November 2107
+	First version: November 2017
+        
+    Revision (June, 2019) B.V. Carlson
+        Changes: 
+                - Several functions changed and a new variable $FirstIndex introduced
+                  to include a lower index i=0 , as commonly used in the Dirac algebra.
+                  Function Reflection added.
+    
  *)
 
 (* :References: 
@@ -162,26 +169,45 @@ in a n-dimensional space."
 Joint::usage = "Joint[m1,m2,n] returns the Join of the multivectors m1 and m2
 in a n-dimensional space."
 
+Reflection::usage = "Reflection[v,w] reflects the vector v by the hyperplane
+orthogonal to w."
+                            
 ToBasis::usage = "ToBasis[x] Transform the vector x from {a,b,...} to the
-standar form used in this Package: a e[1] + b e[2]+...."
+standard form used in this Package: a e[1] + b e[2]+...."
 
 ToVector::usage ="ToVector[x,n] transform the n-dimensional vector x from
-a e[1] + b e[2] +... to the standar Mathematica form {a,b,...}. The defaul 
+a e[1] + b e[2] +... to the standard Mathematica form {a,b,...}. The default 
 value of n is 3."
 
 $SetSignature::usage = "$SetSignature sets the indices (p,q) of the bilinear form
 used to define the Clifford Algebra. The default value is {20,0}. Once changed, 
 it can be recovered by Clear[$SetSignature];."
 
+$FirstIndex::usage = "$FirstIndex sets the lowest index of the vectors e[i] to an arbitrary
+nonnegative integer. Its principal purpose is to include the value i=0, commonly used in the
+relativistic Clifford algebra. The default value is 1. Once changed, it can be recovered by
+Clear[$FirstIndex];"
+                            
 (* Set the indices (p,q,s) of the bilinear form *)
 $SetSignature = {20,0}
 
+(* Set the value of the first index *)
+$FirstIndex = 1                            
 
 Begin["`Private`"]  (* Begin the Private Context *)
 
 (* Unprotect functions *)
+protected = Unprotect [Clear]
 
 (* Error Messages *)
+CliffordBasic::messagevectors = "`1` function works only with vectors."
+CliffordBasic::messagebivectors = "`1` function works only with bivectors."
+CliffordBasic::messagedim = "Function works in three dimensions."
+                            
+(* Clear function *)
+Clear[$SetSignature] := $SetSignature = {20,0}
+
+Clear[$FirstIndex] := $FirstIndex = 1                            
 
 (* Definition of auxiliary functions and local (static) variables *)
 
@@ -190,29 +216,30 @@ GFactor[x_] := Collect[Expand[x], e[__]]
 
 (* dimensions returns the maximum dimension of the space where multivector
 is embedded *)
-dimensions[a_] := 0 /; FreeQ[a, e[__?Positive]]
-dimensions[(a_: 1) e[k__?Positive]] := Max[{k}]
+dimensions[a_] := 0 /; FreeQ[a, e[__?NonNegative]]
+dimensions[(a_: 1) e[k__?NonNegative]] := Max[{k}]
 dimensions[x_ + y_] := Max[dimensions[x], dimensions[y]]
 
 (* Pseudoscalar function *)
-Pseudoscalar[n_ /; Element[n, Integers] && n > 0] := e @@ Range[n]
+Pseudoscalar[n_ /; Element[n, Integers] && n > 0] := e @@ (Range[n]+$FirstIndex-1)
 
 (* HomogeneousQ function *)
-HomogeneousQ[x_,r_ /; Element[r, Integers] && Positive[r]] := Simplify[x === Grade[x,r]]
+HomogeneousQ[x_,r_ /; Element[r, Integers] && NonNegative[r]] := Simplify[x === Grade[x,r]]
 
 
 (* The RELATIONS of the clifford algebra *)
 e[] := 1
-e[i_Integer, j__Integer] := e[]                                   /; i == j && i <= $SetSignature[[1]] && EvenQ[Length[{i, j}]] && i > 0
-e[i_Integer, j__Integer] := e[i]                                  /; i == j && i <= $SetSignature[[1]] && OddQ[Length[{i, j}]] && i > 0
-e[i_Integer, j__Integer] := (-e[])^(Length[{i, j}]/2)             /; i == j && i > $SetSignature[[1]] && i <= Plus@@$SetSignature && EvenQ[Length[{i, j}]] && i > 0
-e[i_Integer, j__Integer] := (-e[])^((Length[{i, j}] - 1)/2) e[i]  /; i == j && i > $SetSignature[[1]] && i <= Plus@@$SetSignature && OddQ[Length[{i, j}]] && i > 0
-e[i_Integer, j__Integer] := 0                                     /; i == j && Max[{i, j}] > Plus@@$SetSignature && AllTrue[{i, j}, Positive]
-e[i_Integer, j_Integer] := -e[j,i]                                /; i != j && i > j  && AllTrue[{i, j}, Positive]
-e[i__Integer] := Signature[Ordering[{i}]] Apply[e,Sort[{i}]]      /; ! OrderedQ[{i}] && AllTrue[{i}, Positive]
+e[i_Integer, j__Integer] := e[]                                   /; i == j && i <= $SetSignature[[1]]+$FirstIndex-1 && EvenQ[Length[{i, j}]] && i >= 0
+e[i_Integer, j__Integer] := e[i]                                  /; i == j && i <= $SetSignature[[1]]+$FirstIndex-1 && OddQ[Length[{i, j}]] && i >= 0
+e[i_Integer, j__Integer] := (-e[])^(Length[{i, j}]/2)             /; i == j && i > $SetSignature[[1]]+$FirstIndex-1 && i <= (Plus@@$SetSignature)+$FirstIndex-1 && EvenQ[Length[{i, j}]] && i >= 0
+e[i_Integer, j__Integer] := (-e[])^((Length[{i, j}] - 1)/2) e[i]  /; i == j && i > $SetSignature[[1]]+$FirstIndex-1 && i <= (Plus@@$SetSignature)+$FirstIndex-1 && OddQ[Length[{i, j}]] && i >= 0
+e[i_Integer, j__Integer] := 0                                     /; i == j && Max[{i, j}] > (Plus@@$SetSignature)+$FirstIndex-1 && AllTrue[{i, j}, NonNegative]
+e[i_Integer, j_Integer] := -e[j,i]                                /; i != j && i > j  && AllTrue[{i, j}, NonNegative]
+e[i__Integer] := Signature[Ordering[{i}]] Apply[e,Sort[{i}]]      /; ! OrderedQ[{i}] && AllTrue[{i}, NonNegative]
 e[i__Integer] := Module[{es = Cases[Apply[e, Gather[{i}], 1], Except[_Integer]]},
                           Return[(Times @@ Join[Cases[Apply[e, Gather[{i}], 1], _Integer], Cases[{Times @@ es}, _Integer]]) e @@ Cases[es, e[x_] :> x]]
-                       ]                                          /;  OrderedQ[{i}] && ! DuplicateFreeQ[{i}]  && AllTrue[{i}, Positive]
+                       ]                                          /;  OrderedQ[{i}] && ! DuplicateFreeQ[{i}]  && AllTrue[{i}, NonNegative]
+
 
 (* Begin Geometric Product Section *)
 GeometricProduct[ _] := $Failed
@@ -221,9 +248,9 @@ GeometricProduct[x_, y_, z__] := Fold[GeometricProduct, Expand[x], {Expand[y], z
 GeometricProduct[x_, y_ + z_] := GeometricProduct[x, y] + GeometricProduct[x, z]
 GeometricProduct[x_ + y_, z_] := GeometricProduct[x, z] + GeometricProduct[y, z]
 GeometricProduct[a_, b_] := a b e[]    /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-GeometricProduct[a_ , (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := a b e[i]         /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-GeometricProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], b_] :=  a b e[i]         /; FreeQ[a, e[__]] && FreeQ[b, e[__]] 
-GeometricProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature],{j}]]] := 
+GeometricProduct[a_ , (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := a b e[i]         /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
+GeometricProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], b_] :=  a b e[i]         /; FreeQ[a, e[__]] && FreeQ[b, e[__]] 
+GeometricProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] := 
               a b e[i, j]   /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
 (* End of Geometric Product Section *)
  
@@ -233,7 +260,7 @@ Grade[a_, r_ /; Element[r, Integers]] := If[r === 0, a, 0]             /; FreeQ[
 Grade[x_, r_ /; Element[r, Integers]] := Grade[Expand[x], r]           /; x =!= Expand[x]
 Grade[x_, r_ /; Element[r, Integers]] := 0                             /; r < 0
 Grade[x_ + y_, r_ /; Element[r, Integers]] := Grade[x, r] + Grade[y, r]
-Grade[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], r_ /; Element[r, Integers]] := If[Length[{i}] === r, a e[i], 0]
+Grade[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], r_ /; Element[r, Integers]] := If[Length[{i}] === r, a e[i], 0]
 (* End of Grade Section *)
 
 
@@ -243,9 +270,9 @@ InnerProduct[x_, y_] := InnerProduct[Expand[x], Expand[y]]                      
 InnerProduct[x_, y_ + z_] := InnerProduct[x, y] + InnerProduct[x, z]
 InnerProduct[x_ + y_, z_] := InnerProduct[x, z] + InnerProduct[y, z]
 InnerProduct[a_, b_] := 0                                                                       /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-InnerProduct[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := 0              /; FreeQ[a, e[__]]
-InnerProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], a_] := 0              /; FreeQ[a, e[__]]
-InnerProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature],{j}]]] := 
+InnerProduct[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := 0              /; FreeQ[a, e[__]]
+InnerProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], a_] := 0              /; FreeQ[a, e[__]]
+InnerProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] := 
               Grade[a b e[i,j], Abs[Length[{i}] - Length[{j}]]]        /; FreeQ[a, e[__]] && FreeQ[b, e[__]] 
 (* End of Inner Product Section *)
 
@@ -256,9 +283,9 @@ LeftContraction[x_, y_] := LeftContraction[Expand[x], Expand[y]]                
 LeftContraction[x_, y_ + z_] := LeftContraction[x, y] + LeftContraction[x, z]
 LeftContraction[x_ + y_, z_] := LeftContraction[x, z] + LeftContraction[y, z]
 LeftContraction[a_, b_] := a b                                                                   /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-LeftContraction[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := a b e[i]     /; FreeQ[a, e[__]]
-LeftContraction[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], a_] := 0            /; FreeQ[a, e[__]]
-LeftContraction[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature],{j}]]] := 
+LeftContraction[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := a b e[i]     /; FreeQ[a, e[__]]
+LeftContraction[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], a_] := 0            /; FreeQ[a, e[__]]
+LeftContraction[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] := 
               a b Grade[e[i,j], Length[{j}] - Length[{i}]]        /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
 (* End of Left Contraction Section *)
 
@@ -269,9 +296,9 @@ RightContraction[x_, y_] := RightContraction[Expand[x], Expand[y]]              
 RightContraction[x_, y_ + z_] := RightContraction[x, y] + RightContraction[x, z]
 RightContraction[x_ + y_, z_] := RightContraction[x, z] + RightContraction[y, z]
 RightContraction[a_, b_] := a b                                                                   /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-RightContraction[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := 0            /; FreeQ[a, e[__]]
-RightContraction[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], a_] := a b e[i]     /; FreeQ[a, e[__]]
-RightContraction[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature],{j}]]] := 
+RightContraction[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := 0            /; FreeQ[a, e[__]]
+RightContraction[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], a_] := a b e[i]     /; FreeQ[a, e[__]]
+RightContraction[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] := 
               a b Grade[e[i,j], Length[{i}] - Length[{j}]]        /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
 (* End of Right Contraction Section *)
 
@@ -282,11 +309,12 @@ ScalarProduct[x_, y_] := ScalarProduct[Expand[x], Expand[y]]                    
 ScalarProduct[x_, y_ + z_] := ScalarProduct[x, y] + ScalarProduct[x, z]
 ScalarProduct[x_ + y_, z_] := ScalarProduct[x, z] + ScalarProduct[y, z]
 ScalarProduct[a_, b_] := a b                                                                       /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-ScalarProduct[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := 0              /; FreeQ[a, e[__]]
-ScalarProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], a_] := 0              /; FreeQ[a, e[__]]
-ScalarProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature],{j}]]] := 
+ScalarProduct[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := 0              /; FreeQ[a, e[__]]
+ScalarProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], a_] := 0              /; FreeQ[a, e[__]]
+ScalarProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] := 
               a b Grade[e[i,j], 0]        /; FreeQ[a, e[__]] && FreeQ[b, e[__]] 
 (* End of Inner Product Section *)
+
 
 (* Begin Outer Product Section *)
 OuterProduct[_] := $Failed
@@ -296,8 +324,8 @@ OuterProduct[x_, y_ + z_] := OuterProduct[x, y] + OuterProduct[x, z]
 OuterProduct[x_ + y_, z_] := OuterProduct[x, z] + OuterProduct[y, z]
 OuterProduct[a_, b_] := a b        /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
 OuterProduct[a_, (b_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]]] := a b e[i]       /; FreeQ[a, e[__]]
-OuterProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], a_] := a b e[i]       /; FreeQ[a, e[__]]
-OuterProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature],{j}]]] :=
+OuterProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], a_] := a b e[i]       /; FreeQ[a, e[__]]
+OuterProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] :=
               Grade[a b e[i,j], Length[{i}] + Length[{j}]]        /;  FreeQ[a, e[__]] && FreeQ[b, e[__]]
 (* End of Outer Product Section *)
 
@@ -306,17 +334,19 @@ OuterProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]], (b_: 1
 Turn[_] := $Failed
 Turn[x_] := Turn[Expand[x]]                                                               /; x =!= Expand[x]
 Turn[a_] := a                                                                             /; FreeQ[a, e[__]]
-Turn[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := a e @@ Reverse[{i}]  /; FreeQ[a, e[__]]
+Turn[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := a e @@ Reverse[{i}]  /; FreeQ[a, e[__]]
 Turn[x_ + y_] := Turn[x] + Turn[y]
 (* End of Turn Section *)
+
 
 (* Begin Involution Section *)
 Involution[_] := $Failed
 Involution[x_] := Involution[Expand[x]]                                                            /; x =!= Expand[x]
 Involution[a_] := a                                                                       			 /; FreeQ[a, e[__]]
-Involution[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature],{i}]]] := (-1)^Length[{i}] a e[i]  /; FreeQ[a, e[__]]
+Involution[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := (-1)^Length[{i}] a e[i]  /; FreeQ[a, e[__]]
 Involution[x_ + y_] := Involution[x] + Involution[y]
 (* End of Involution Section *)
+
 
 (*  Magnitude function *)
 Magnitude[v_] := Sqrt[Grade[GeometricProduct[v,Turn[v]],0]]
@@ -331,16 +361,27 @@ Meet[x_, y_, n_] := With[{met=(-1)^(n (n - 1)/2) Dual[OuterProduct[Dual[x, n], D
 Joint[x_, y_, n_] := OuterProduct[x, InnerProduct[MultivectorInverse[Meet[x, y, n]], y]]
 
 (* Begin MultivectorInverse function *)
-MultivectorInverse[v_] := If[Magnitude[v] != 0, Turn[v] / Magnitude[v]^2, Print["Non invertible multivector"]] 
+MultivectorInverse[v_] := Module[{v1=GeometricProduct[v,Turn[v]]},
+             If[v1 === Grade[v1,0],
+                Turn[v] / Magnitude[v]^2,
+                Print["Non invertible multivector"]
+               ] 
+        ]
 (* End of MultivectorInverse *)
 
+(* Begin Reflection function *)
+Reflection[v_,w_] := Module[{w2=GeometricProduct[w,w]},
+      If[(!HomogeneousQ[v,1]) || (!HomogeneousQ[w,1]) || w2==0,
+           Message[Clifford::messagevectors,Reflection]; $Failed,
+       GeometricProduct[-w,v,w]/w2 ] ]
+(* End of Reflection *)
 
 (* ToBasis function *)
-ToBasis[x_?VectorQ] := Dot[x, List @@ e /@ Range[Length[x]]]
+ToBasis[x_?VectorQ] := Dot[x, List @@ e /@ (Range[Length[x]]+$FirstIndex-1)]
 
 
-(* Begin  ToVector funtion *)
-ToVector[v_, d_: 3]:= Table[Coefficient[v, e[i]], {i, dimensions[v]}] /; HomogeneousQ[v,1] 
+(* Begin  ToVector function *)
+ToVector[v_, d_: 3]:= Table[Coefficient[v, e[i]], {i,$FirstIndex,dimensions[v]}] /; HomogeneousQ[v,1] 
 (* End of ToVector *)
 
 
