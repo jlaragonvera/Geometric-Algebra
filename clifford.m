@@ -85,7 +85,13 @@
     Version 0.7 (Sep,2016): J.L. Aragon
     	Changes:
     		- Some incompatibilities with Mathematica 11 were fixed. 
- *)
+
+    Revision (May, 2019) B.V. Carlson
+        Changes: 
+                - Several functions changed and a new variable $FirstIndex introduced
+                  to include a lower index i=0 , as commonly used in the Dirac algebra.
+                  Functions Rotor and Reflectionn added.
+                *)
 
 
 (* :References: 
@@ -148,6 +154,14 @@ multivector m."
 
 Reflection::usage = "Reflection[v,w,x] reflects the vector v by the plane
 formed by the vectors w and x."
+                        
+Reflectionn::usage = "Reflectionn[v,w] reflects the vector v by the hyperplane
+orthogonal to w."
+                        
+Rotor::usage = "Rotor calculates the invariant reduction of the bivector argument
+of an arbitrary rotation. It returns four parameters: the angle alpha and unit
+bivector Bp of the boost (Cosh(alpha/2) + Sinh(alpha/2)*Bp) and the angle beta and
+unit bivector IBp of the rotation (Cos(beta/2) + Sin(beta/2)*IBp)."
 
 CProjection::usage = "CProjection[v,w] calculate the Projection of the vector v
 on the subspace defined by the r-blade w."
@@ -159,7 +173,7 @@ ToBasis::usage = "ToBasis[x] Transform the vector x from {a,b,...} to the
 standar form used in this Package: ae[1]+be[2]+...."
 
 ToVector::usage ="ToVector[x,n] transform the n-dimensional vector x from
-ae[1]+be[2]+... to the standar Mathematica form {a,b,...}. The defaul value of
+ae[1]+be[2]+... to the standard Mathematica form {a,b,...}. The defaul value of
 n is the highest of all e[i]'s."
 
 QuaternionProduct::usage = "QuaternionProduct[q1,q2,...] gives the product of
@@ -199,15 +213,21 @@ used to define the Clifford Algebra (s is the index of degeneracy). For simplici
 only {p,q} is specified and it assumed that for i>p+q we have GeometricProduct[e[i],e[i]]=0.
 The default value is {20,0}. Once changed, it can be recovered by Clear[$SetSignature];."
 
+$FirstIndex::usage = "$FirstIndex sets the lowest index of the vectors e[i] to an arbitrary
+nonnegative integer. Its principal purpose is to include the value i=0, commonly used in the
+relativistic Clifford algebra. The default value is 1. Once changed, it can be recovered by
+Clear[$FirstIndex];"
+
 GADraw::usage = "GADraw function plots vectors, bi-vectors and trivectors in the canonical
-basis of Clifford Algebra. To change the view of the plot, it must be
-used the ViewPoint function, e.g. Draw[x,ViewPoint->{0,1,0}]. Default
-value of ViewPoint is {1.3,-2.4,2}";
+basis of Clifford Algebra. To change the view of the plot, the ViewPoint function must be used,
+e.g. Draw[x,ViewPoint->{0,1,0}]. Default value of ViewPoint is {1.3,-2.4,2}";
 
 
 (* Set the indices (p,q,s) of the bilinear form *)
 $SetSignature = {20,0}
 
+(* Set the value of the first index *)
+$FirstIndex = 1                            
 
 Begin["`Private`"]  (* Begin the Private Context *)
 
@@ -218,6 +238,7 @@ protected = Unprotect [Re, Im, Clear]
 
 (* Error Messages *)
 Clifford::messagevectors = "`1` function works only with vectors."
+Clifford::messagebivectors = "`1` function works only with bivectors."                            
 Clifford::messagedim = "Function works in three dimensions."
 DrawBiVec::"Out of Dimension" = "Dimension must be less or equal to 3 dimension.";
 
@@ -225,6 +246,7 @@ DrawBiVec::"Out of Dimension" = "Dimension must be less or equal to 3 dimension.
 (* Clear function *)
 Clear[$SetSignature] := $SetSignature = {20,0}
 
+Clear[$FirstIndex] := $FirstIndex = 1                            
  
 (* Output mimics standard mathematical notation *)
 Format[e[x_]] := SubscriptBox[e, x] //DisplayForm
@@ -236,12 +258,12 @@ GeometricProduct[x_ , y_ ] := Simplify[geoprod[Expand[x],Expand[y]]] // Expand
 geoprod[x_,y_] := Module[{
    nx = ntuple[Expand[x], Max[dimensions[Expand[x]], dimensions[Expand[y]]]], 
    ny = ntuple[Expand[y], Max[dimensions[Expand[x]], dimensions[Expand[y]]]], gp},
-   gp = (Times @@ e /@ Flatten[Position[nx + ny, 1]])*\
+   gp = (Times @@ e /@ (Flatten[Position[nx + ny, 1]] + $FirstIndex - 1))*\
 		Apply[Times, Apply[bilinearform, Map[{e[#], e[#]} &, Flatten[Position[nx + ny, 2]]], {1}]];
    Return[gp*(-1)^Sum[ny[[m]]*nx[[n]], {m, Length[nx] - 1}, {n, m + 1, Length[ny]}]]]
-geoprod[a_ x_,y_] := a geoprod[x,y] /; FreeQ[a,e[_?Positive]]
-geoprod[x_,a_ y_] := a geoprod[x,y] /; FreeQ[a,e[_?Positive]]
-geoprod[x_, y_] := x y /; (FreeQ[x, e[_?Positive]] || FreeQ[y, e[_?Positive]])
+geoprod[a_ x_,y_] := a geoprod[x,y] /; FreeQ[a,e[_?NonNegative]]
+geoprod[x_,a_ y_] := a geoprod[x,y] /; FreeQ[a,e[_?NonNegative]]
+geoprod[x_, y_] := x y /; (FreeQ[x, e[_?NonNegative]] || FreeQ[y, e[_?NonNegative]])
 geoprod[x_,y_Plus] := Distribute[f[x,y],Plus] /. f->GeometricProduct
 geoprod[x_Plus,y_] := Distribute[f[x,y],Plus] /. f->GeometricProduct
 (* End of Geometric Product Section *)
@@ -249,11 +271,10 @@ geoprod[x_Plus,y_] := Distribute[f[x,y],Plus] /. f->GeometricProduct
  
 (* Begin Grade Section *)
 Grade[m_Plus,r_?NumberQ] := Distribute[tmp[m,r],Plus] /. tmp->Grade
-Grade[m_,r_?NumberQ] := If[grados[m]===r,m,0] (*Here was the bug. Before If[grados[m]==r,m,0]*)
- 
-grados[a_] := 0 /; FreeQ[a,e[_?Positive]]
+Grade[m_,r_?NumberQ] := If[grados[m]===r,m,0] (*Here was the bug. Before If[grados[m]==r,m,0]*) 
+grados[a_] := 0 /; FreeQ[a,e[_?NonNegative]]
 grados[x_] := grados[x] = Plus @@ ntuple[x,Max[dimensions[x]]]
-grados[a_ x_] := grados[x] /; FreeQ[a,e[_?Positive]]
+grados[a_ x_] := grados[x] /; FreeQ[a,e[_?NonNegative]]
 (* End of Grade Section *)
 
 
@@ -261,14 +282,14 @@ grados[a_ x_] := grados[x] /; FreeQ[a,e[_?Positive]]
 InnerProduct[ _] := $Failed
 InnerProduct[m1_,m2_,m3__] := Fold[InnerProduct, m1, {m2, m3}] // Simplify
 InnerProduct[m1_,m2_] := innprod[Expand[m1],Expand[m2]] // Expand
-innprod[a_,y_] := 0 /; FreeQ[a,e[_?Positive]]
-innprod[x_,a_] := 0 /; FreeQ[a,e[_?Positive]]
+innprod[a_,y_] := 0 /; FreeQ[a,e[_?NonNegative]]
+innprod[x_,a_] := 0 /; FreeQ[a,e[_?NonNegative]]
 innprod[x_,y_] := innprod[x,y] = Module[
       {p=Plus @@ ntuple[x,Max[dimensions[x],dimensions[y]]],
   q=Plus @@ ntuple[y,Max[dimensions[x],dimensions[y]]]},
   Grade[GeometricProduct[x,y],Abs[p-q]] ]
-innprod[a_ x_,y_] := a innprod[x,y] /; FreeQ[a,e[_?Positive]]
-innprod[x_,a_ y_] := a innprod[x,y] /; FreeQ[a,e[_?Positive]]
+innprod[a_ x_,y_] := a innprod[x,y] /; FreeQ[a,e[_?NonNegative]]
+innprod[x_,a_ y_] := a innprod[x,y] /; FreeQ[a,e[_?NonNegative]]
 innprod[x_,y_Plus] := Distribute[tmp[x,y],Plus] /. tmp->innprod
 innprod[x_Plus,y_] := Distribute[tmp[x,y],Plus] /. tmp->innprod
 (* End of Inner Product Section *)
@@ -278,14 +299,14 @@ innprod[x_Plus,y_] := Distribute[tmp[x,y],Plus] /. tmp->innprod
 OuterProduct[ _] := $Failed
 OuterProduct[m1_,m2_,m3__] := Fold[OuterProduct, m1, {m2, m3}] // Simplify
 OuterProduct[m1_,m2_] := outprod[Expand[m1],Expand[m2]] // Expand
-outprod[a_,y_] := a y /; FreeQ[a,e[_?Positive]]
-outprod[x_,a_] := a x /; FreeQ[a,e[_?Positive]]
+outprod[a_,y_] := a y /; FreeQ[a,e[_?NonNegative]]
+outprod[x_,a_] := a x /; FreeQ[a,e[_?NonNegative]]
 outprod[x_,y_] := outprod[x,y] = Module[
       {p=Plus @@ ntuple[x,Max[dimensions[x],dimensions[y]]],
   q=Plus @@ ntuple[y,Max[dimensions[x],dimensions[y]]]},
   Grade[GeometricProduct[x,y],p+q] ]
-outprod[a_ x_,y_] := a outprod[x,y] /; FreeQ[a,e[_?Positive]]
-outprod[x_,a_ y_] := a outprod[x,y] /; FreeQ[a,e[_?Positive]]
+outprod[a_ x_,y_] := a outprod[x,y] /; FreeQ[a,e[_?NonNegative]]
+outprod[x_,a_ y_] := a outprod[x,y] /; FreeQ[a,e[_?NonNegative]]
 outprod[x_,y_Plus] := Distribute[tmp[x,y],Plus] /. tmp->outprod
 outprod[x_Plus,y_] := Distribute[tmp[x,y],Plus] /. tmp->outprod
 (* End of Outer Product Section *)
@@ -293,16 +314,16 @@ outprod[x_Plus,y_] := Distribute[tmp[x,y],Plus] /. tmp->outprod
 
 (* Begin Turn Section *)
 Turn[m_] := backside[Expand[m]]
-backside[a_] := a /; FreeQ[a,e[_?Positive]]
+backside[a_] := a /; FreeQ[a,e[_?NonNegative]]
 backside[x_] := x /; Length[x]==1
-backside[x_] := bakside[x] = GeometricProduct @@ e/@Reverse[dimensions[x]]
-backside[a_ x_] := a backside[x] /; FreeQ[a,e[_?Positive]]
+backside[x_] := bakside[x] = GeometricProduct @@ e /@ Reverse[dimensions[x]+$FirstIndex-1]
+backside[a_ x_] := a backside[x] /; FreeQ[a,e[_?NonNegative]]
 backside[x_Plus] := Distribute[tmp[x],Plus] /. tmp->backside
 (* End of Turn Section *)
 
 
 (* Pseudoscalar function *)
-Pseudoscalar[x_?Positive] := Apply[Times, e /@ Range[x]]
+Pseudoscalar[x_?NonNegative] := Apply[Times, e /@ (Range[x]+$FirstIndex-1)]
 
 
 (* HomogeneousQ function *)
@@ -319,8 +340,8 @@ Dual[v_,x_?Positive] := GeometricProduct[v,Turn[Pseudoscalar[x]]]
 
 (* Begin Rotation function *)
 Rotation[v_,w_,x_,angle_:Automatic] := Module[{r,theta=angle*Pi/180,
-       plano=OuterProduct[w,x]},
-       If[(!HomogeneousQ[v,1]) || (!HomogeneousQ[w,1]) || (!HomogeneousQ[x,1]),
+       plano=OuterProduct[w,x],wx2},wx2=GeometricProduct[plano,plano];
+       If[(!HomogeneousQ[v,1]) || (!HomogeneousQ[w,1]) || (!HomogeneousQ[x,1]) || wx2==0,
            Message[Clifford::messagevectors,Rotation]; $Failed,
     If[angle === Automatic,
             theta=InnerProduct[w,x]/(Magnitude[w]*Magnitude[x]);
@@ -339,6 +360,35 @@ MultivectorInverse[v_] := Module[{v1=GeometricProduct[v,Turn[v]]},
          ]
 (* End of MultivectorInverse *)
 
+(* Begin Rotor function *)
+Rotor[B_] := Module[{rho, cosph, Bp, B2, ps, alpha, beta},
+  If[!HomogeneousQ[B, 2], 
+   Message[Clifford::messagebivectors, Rotor]; $Failed,
+   cosph = InnerProduct[B, B];
+   B2 = OuterProduct[B, B];
+   If[Magnitude[B2] == 0, ps = 0; rho = cosph,
+    ps = Grade[B2, 4];
+    rho = Sqrt[Abs[InnerProduct[ps, ps]]];
+    If[rho > 0, ps = ps/rho];
+    rho = Sqrt[rho^2 + cosph^2]];
+     If[rho == 0, alpha = 0; beta = 0; Bp = B; ps = 0,
+       cosph = cosph/rho;
+       alpha = Sqrt[(1 + cosph)/2];            
+       beta = Sqrt[(1 - cosph)/2];
+       cosph = rho;
+       rho = Sqrt[Abs[rho]];
+       Bp = GeometricProduct[(alpha - beta*ps)/rho, B]];
+     If[cosph > 0,
+       Return[{rho*alpha, Bp, rho*beta, GeometricProduct[ps, Bp]}], 
+       Return[{0, 0, rho*alpha, Bp}]]]]
+(* End of Rotor *)                                                      
+                            
+(* Begin Reflectionn function *)
+Reflectionn[v_,w_] := Module[{w2=GeometricProduct[w,w]},
+      If[(!HomogeneousQ[v,1]) || (!HomogeneousQ[w,1]) || w2==0,
+           Message[Clifford::messagevectors,Reflection]; $Failed,
+       GeometricProduct[-w,v,w]/w2 ] ]
+(* End of Reflectionn *)
 
 (* Begin Reflection function *)
 Reflection[v_,w_,x_] := Module[{u,plano=OuterProduct[w,x]},
@@ -347,7 +397,6 @@ Reflection[v_,w_,x_] := Module[{u,plano=OuterProduct[w,x]},
           u=Dual[plano/Magnitude[plano],3];
        GeometricProduct[-u,v,u] ] ]
 (* End of Reflection *)
-
 
 (* CProjection function *)
 CProjection[v_,w_] := GeometricProduct[InnerProduct[v,w],MultivectorInverse[w]]
@@ -358,10 +407,10 @@ Rejection[v_,w_] := GeometricProduct[OuterProduct[v,w],MultivectorInverse[w]]
 
 
 (* ToBasis function *)
-ToBasis[x_?VectorQ] := Dot[x, List @@ e /@ Range[Length[x]]]
+ToBasis[x_?VectorQ] := Dot[x, List @@ e /@ (Range[Length[x]]+$FirstIndex-1)]
 
 
-(* Begin  ToVector funtion *)
+(* Begin  ToVector function *)
 ToVector[x_,d_:Automatic] := Module[{dim=d,aux,v=Expand[x]},
    If[HomogeneousQ[v,1],
            aux=Flatten[dimensions[v]];
@@ -439,22 +488,25 @@ GeometricProductSeries[sym_Symbol,m_,n_:10] := Module[
 
 (* Begin bilinearform Section *)
 bilinearform[e[i_],e[i_]] := 1 /; i <= $SetSignature[[1]]
-bilinearform[e[i_],e[i_]] := -1 /; (i > $SetSignature[[1]]) && (i <= $SetSignature[[1]] + $SetSignature[[2]])
-bilinearform[e[i_],e[i_]] := 0  /; (i > $SetSignature[[1]] +  $SetSignature[[2]])
+bilinearform[e[i_],e[i_]] := -1 /; (i > $SetSignature[[1]]) && 
+                            (i <=  $SetSignature[[1]] + $SetSignature[[2]])
+bilinearform[e[i_],e[i_]] := 0  /; (i > $SetSignature[[1]] + $SetSignature[[2]])
 
 
 (* Begin dimensions Section *)
-dimensions[x_] := dimensions[x] = List @@ x /. e[k_?Positive] -> k
+dimensions[x_] := dimensions[x] = If[Length[x]==1, List @@ x + 1 - $FirstIndex,
+                        List @@ x /. e[k_?NonNegative]  -> k + 1 - $FirstIndex]
 dimensions[x_Plus] := dimensions /@ List @@ x 
-dimensions[a_] := {0} /; FreeQ[a,e[_?Positive]]
+dimensions[a_] := {0} /; FreeQ[a,e[_?NonNegative]]
 
-dimensions[a_ x_] := dimensions[x] /; FreeQ[a,e[_?Positive]]
+dimensions[a_ x_] := dimensions[x] /; FreeQ[a,e[_?NonNegative]]
 (* End of dimensions Section *)
 
 
 (* Begin ntuple function *)
-ntuple[x_,dim_] := ntuple[x,dim] = ReplacePart[ Table[0,{dim}], 1, List @@ x /.
-                                     e[k_?Positive] -> {k}]
+ntuple[x_,dim_] := ntuple[x,dim] = ReplacePart[ Table[0,{dim}], 1, 
+                       If[Length[x]==1, List @@ x + 1 - $FirstIndex,
+                        List @@ x /. e[k_?NonNegative]  -> {k + 1 - $FirstIndex} ] ]
 (* End of ntuple *)
 
 
