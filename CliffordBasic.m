@@ -323,7 +323,7 @@ OuterProduct[x_, y_, z__] := Fold[OuterProduct, x, {y, z}] // Simplify
 OuterProduct[x_, y_ + z_] := OuterProduct[x, y] + OuterProduct[x, z]
 OuterProduct[x_ + y_, z_] := OuterProduct[x, z] + OuterProduct[y, z]
 OuterProduct[a_, b_] := a b        /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-OuterProduct[a_, (b_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]]] := a b e[i]       /; FreeQ[a, e[__]]
+OuterProduct[a_, (b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]]] := a b e[i]       /; FreeQ[a, e[__]]
 OuterProduct[(b_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], a_] := a b e[i]       /; FreeQ[a, e[__]]
 OuterProduct[(a_: 1) e[i__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{i}]], (b_: 1) e[j__ /; SubsetQ[Range[Plus @@ $SetSignature]+$FirstIndex-1,{j}]]] :=
               Grade[a b e[i,j], Length[{i}] + Length[{j}]]        /;  FreeQ[a, e[__]] && FreeQ[b, e[__]]
