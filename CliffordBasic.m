@@ -171,6 +171,10 @@ in a n-dimensional space."
 
 Reflection::usage = "Reflection[v,w] reflects the vector v by the hyperplane
 orthogonal to w."
+
+Rotation::usage = "Rotation[x,a,b,theta] rotates the vector x by an angle theta (in radians), 
+along the plane defined by a and b. The sense of the rotation is from a to b.
+If no theta is given, the default value is the  angle between a and b."
                             
 ToBasis::usage = "ToBasis[x] Transform the vector x from {a,b,...} to the
 standard form used in this Package: a e[1] + b e[2]+...."
@@ -224,7 +228,7 @@ dimensions[x_ + y_] := Max[dimensions[x], dimensions[y]]
 Pseudoscalar[n_ /; Element[n, Integers] && n > 0] := e @@ (Range[n]+$FirstIndex-1)
 
 (* HomogeneousQ function *)
-HomogeneousQ[x_,r_ /; Element[r, Integers] && NonNegative[r]] := Simplify[x === Grade[x,r]]
+HomogeneousQ[x_,r_ /; Element[r, Integers] && NonNegative[r]] := Simplify[Expand[x] === Grade[x,r]]
 
 
 (* The RELATIONS of the clifford algebra *)
@@ -375,6 +379,12 @@ Reflection[v_,w_] := Module[{w2=GeometricProduct[w,w]},
            Message[Clifford::messagevectors,Reflection]; $Failed,
        GeometricProduct[-w,v,w]/w2 ] ]
 (* End of Reflection *)
+
+(* Begin Rotation function *)
+Rotation[x_, a_, b_, angle_:VectorAngle[ToVector[a],ToVector[b]]] := Module[{plane=OuterProduct[a, b]},
+	Return[GFactor[GeometricProduct[Cos[angle/2] - (plane/Magnitude[plane])*Sin[angle/2], x, Cos[angle/2] + (plane/Magnitude[plane])*Sin[angle/2]]]]
+        ]
+(* End of Rotation *)
 
 (* ToBasis function *)
 ToBasis[x_?VectorQ] := Dot[x, List @@ e /@ (Range[Length[x]]+$FirstIndex-1)]
