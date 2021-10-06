@@ -31,6 +31,10 @@
 
 (* :History:
    First version: 1.0 October 2017.
+   
+   Revision (October, 2021) J.L. Aragón and A. Ortíz-Durán
+        - GradeQ[] fixed.
+        - Rotation[] default argument didn't work; fixed.
 *)
 
 (* :Keywords: Clifford algebra, geometric algebra, conformal model *)
@@ -112,7 +116,7 @@ Contiguous0Inf[i_] := SequenceCases[i, {0, 0}] != {} || SequenceCases[i, {\[Infi
 (* definition of the exported functions *)
 
 (* GradeQ returns True if x contains only terms of grade r *)
-GradeQ[a_, r_?NumberQ]:= If[r === 0, True, False]     /; FreeQ[a, e[_]] 
+GradeQ[a_, r_?NumberQ]:= If[r === 0, True, False]     /; FreeQ[a, e[__]] 
 GradeQ[e[i__], r_?NumberQ] := If[Length[{i}] === r, True , False]
 GradeQ[(a_: 1) e[i__], r_?NumberQ]:= GradeQ[e[i], r]  /; FreeQ[a, e[_]] 
 GradeQ[x_Plus, r_?NumberQ] := And @@ (GradeQ[#, r] & /@ Apply[List, x])
@@ -225,9 +229,10 @@ Dual[x_] := -InnerProduct[x, I5]
 along the plane defined by a and b. The sense of the rotation is from a to b.
 If no theta is given, the default value is the  angle between a and b.
 *)
-Rotation[x_, a_, b_, angle_:VectorAngle[ToVector[a],ToVector[b]]] := Module[{plane=OuterProduct[a, b]},
-	Return[GFactor[GeometricProduct[Cos[angle/2] - (plane/Magnitude[plane])*Sin[angle/2], x, Cos[angle/2] + (plane/Magnitude[plane])*Sin[angle/2]]]]
-    ]  /;  GradeQ[x,1] && GradeQ[a,1] && GradeQ[b,1] 
+Rotation[x_, a_, b_, angle_:Automatic] := Module[{plane=OuterProduct[a, b]},
+    If[angle === Automatic, theta=VectorAngle[ToVector[a],ToVector[b]], theta=angle];
+	Return[GFactor[GeometricProduct[Cos[theta/2] - (plane/Magnitude[plane])*Sin[theta/2], x, Cos[theta/2] + (plane/Magnitude[plane])*Sin[theta/2]]]]
+    ]  /;  GradeQ[x,1] && GradeQ[a,1] && GradeQ[b,1]
 
 (* definitions for system functions *)
 SetAttributes[e,NHoldAll]
