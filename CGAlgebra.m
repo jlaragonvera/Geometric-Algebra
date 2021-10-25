@@ -170,7 +170,7 @@ Grade[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], r_?NumberQ] := 
 (* OuterProduct returns the outer product between two or more multivectors *)
 OuterProduct[_] := $Failed
 OuterProduct[x_, y_] :=  OuterProduct[Expand[x], Expand[y]]   /;  x =!= Expand[x] || y =!= Expand[y]
-OuterProduct[e[i_ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}],e[j_ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]]]] := Expand[(GeometricProduct[e[i],e[j]] - GeometricProduct[e[j],e[i]])/2]
+OuterProduct[e[i_],e[j_]] := Expand[(GeometricProduct[e[i],e[j]] - GeometricProduct[e[j],e[i]])/2]  /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}] && SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]
 OuterProduct[x_, y_, z__] := Fold[OuterProduct, x, {y, z}] // Simplify
 OuterProduct[x_, y_ + z_] := OuterProduct[x, y] + OuterProduct[x, z]
 OuterProduct[x_ + y_, z_] := OuterProduct[x, z] + OuterProduct[y, z]
