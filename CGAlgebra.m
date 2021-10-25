@@ -218,9 +218,9 @@ MultivectorInverse[_] := $Failed
 MultivectorInverse[x_] := MultivectorInverse[Expand[x]]                 /; x =!= Expand[x]
 MultivectorInverse[x_] := Simplify[Reversion[x] / Magnitude[x]^2 ]      /; Magnitude[x] =!= 0
 
-(* I5 = pseudoscalar; I5i = the inverse of I5 *)
-I5 := G[0,1,2,3,\[Infinity]]
-I5i := MultivectorInverse[I5]
+(* I5 = pseudoscalar; I5i = the inverse of I5. Dorst, Fontijne, Mann, 13.3.3 *)
+ I5 := OuterProduct[e[0],OuterProduct[e[1],e[2],e[3]],e[\[Infinity]]]
+ I5i := OuterProduct[e[0],MultivectorInverse[OuterProduct[e[1],e[2],e[3]]],e[\[Infinity]]]
 
 (* Dual returns the dual of a multivector *)
 Dual[x_] := -InnerProduct[x, I5]
