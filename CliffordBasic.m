@@ -2,7 +2,7 @@
 
 (* Set up the Package Context. *)
 
-(* :Title: CliffordBasic0.m -- Basic Clifford Algebra Calculator *)
+(* :Title: Basic Clifford Algebra Calculator *)
 
 (* :Author: Jose L. Aragon *)
 
@@ -62,7 +62,12 @@
                 - Several functions changed and a new variable $FirstIndex introduced
                   to include a lower index i=0 , as commonly used in the Dirac algebra.
                   Function Reflection added.
-    
+		  
+    Revision (April, 2022) J.L. Aragon
+        Changes: 
+                - The last function of the Section "The RELATIONS of the clifford algebra"
+                  didn't work well with signatures q != 0.
+                  It was fixed and improved.
  *)
 
 (* :References: 
@@ -231,7 +236,7 @@ Pseudoscalar[n_ /; Element[n, Integers] && n > 0] := e @@ (Range[n]+$FirstIndex-
 HomogeneousQ[x_,r_ /; Element[r, Integers] && NonNegative[r]] := Simplify[Expand[x] === Grade[x,r]]
 
 
-(* The RELATIONS of the clifford algebra *)
+(* The RELATIONS of the Clifford algebra *)
 e[] := 1
 e[i_Integer, j__Integer] := e[]                                   /; i == j && i <= $SetSignature[[1]]+$FirstIndex-1 && EvenQ[Length[{i, j}]] && i >= 0
 e[i_Integer, j__Integer] := e[i]                                  /; i == j && i <= $SetSignature[[1]]+$FirstIndex-1 && OddQ[Length[{i, j}]] && i >= 0
@@ -240,10 +245,7 @@ e[i_Integer, j__Integer] := (-e[])^((Length[{i, j}] - 1)/2) e[i]  /; i == j && i
 e[i_Integer, j__Integer] := 0                                     /; i == j && Max[{i, j}] > (Plus@@$SetSignature)+$FirstIndex-1 && AllTrue[{i, j}, NonNegative]
 e[i_Integer, j_Integer] := -e[j,i]                                /; i != j && i > j  && AllTrue[{i, j}, NonNegative]
 e[i__Integer] := Signature[Ordering[{i}]] Apply[e,Sort[{i}]]      /; ! OrderedQ[{i}] && AllTrue[{i}, NonNegative]
-e[i__Integer] := Module[{es = Cases[Apply[e, Gather[{i}], 1], Except[_Integer]]},
-                          Return[(Times @@ Join[Cases[Apply[e, Gather[{i}], 1], _Integer], Cases[{Times @@ es}, _Integer]]) e @@ Cases[es, e[x_] :> x]]
-                       ]                                          /;  OrderedQ[{i}] && ! DuplicateFreeQ[{i}]  && AllTrue[{i}, NonNegative]
-
+e[i__Integer] := (Times @@ (Apply[e, Gather[{i}], 1] /. e[_] -> 1))*e @@ (Cases[Apply[e, Gather[{i}], 1], Except[_Integer]] /. (e[x_] | a_ e[x_]) -> x) /;  OrderedQ[{i}] && ! DuplicateFreeQ[{i}]  && AllTrue[{i}, Positive]
 
 (* Begin Geometric Product Section *)
 GeometricProduct[ _] := $Failed
