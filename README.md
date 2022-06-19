@@ -32,9 +32,9 @@ The geometric product
 
 yields:
 
-     a e[0] + 2a e[1] + a e[\[Infinity]] + 5 e[0,1] - 5 e[1,\[Infinity]] + e[0,1,2,3] - e[1,2,3,\[Infinity]]
+     10 + a e[0] + 2a e[1] + a e[\[Infinity]] + 5 e[0,1] - 5 e[1,\[Infinity]] + 2 e[2,3] + e[0,1,2,3] - e[1,2,3,\[Infinity]]
 
-The inner product (left contraction)
+The inner product
 
        InnerProduct[A,B]
 
