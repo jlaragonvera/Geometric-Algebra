@@ -4,7 +4,7 @@
 
 (* :Title: CGAlgebra.m -- Conformal Geometric Algebra *)
 
-(* :Author: Jose L. Aragon *)
+(* :Authors: Alejandra Ortiz Duran and Jose L. Aragon *)
 
 (* :Summary:
    This package contains declarations for calculations with Conformal
@@ -25,16 +25,23 @@
  *)
 (* :Copyright: (c) 2017 by Jose L. Aragon *)
 
-(* :Package Version: 1.0 *)
+(* :Package Version: 2.0 *)
 
 (* :Mathematica Version: 11.0 *)
 
 (* :History:
-   First version: 1.0 October 2017.
+   First version: 1.0 October 2017 by Jose L. Aragon
    
-   Revision (October, 2021) J.L. Aragón and A. Ortíz-Durán
+   Revision (October, 2021) J.L. Aragon and A. Ortiz Duran
         - GradeQ[] fixed.
         - Rotation[] default argument didn't work; fixed.
+  Major revision (May, 2022) Alejandra Ortiz Duran and Jose L. Aragon
+        - Several issues were found when working with the basis {e_0, e_1, e_2, e_3, e_\infty}
+          by applying the general formulas for the outer and inner product:
+          A_p^B_q = <Ap Bq>_{p+q}   and    A_p.B_q = <Ap Bq>_{q-p}.
+          To fix this, the package was refactored and now works in R^{4,1}, with the basis
+          {e1,e2,e3,e4,e5}, and using the changes of variables e4 = e0 - einf/2, e5 = e0 + einf/2
+          and e0 = (e4 + e5)/2, einf = e5 - e4. 
 *)
 
 (* :Keywords: Clifford algebra, geometric algebra, conformal model *)
@@ -100,12 +107,6 @@ If no theta is given, the default value is the  angle between a and b."
 
 Begin["`Private`"] (* Begin Private Context *) 
 
-(* definition of auxiliary functions and local (static) variables *)
-
-(* Auxiliary function to implement the Inner and Outer products *)
-G[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]] := e @@ {i}   /;  ! MemberQ[{i}, 0] || ! MemberQ[{i}, \[Infinity]]
-G[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]] := e @@ {i} +(-1)^Length[{i}] e @@ DeleteCases[{i}, 0 | \[Infinity]] /; MemberQ[{i}, 0] && MemberQ[{i}, \[Infinity]]
-
 (* Returns True if either 0 or \[Infinity] is duplicated *)
 DuplicateQ0Inf[i_] := Count[i, 0] >= 2 || Count[i, \[Infinity]] >= 2
 
@@ -113,12 +114,12 @@ DuplicateQ0Inf[i_] := Count[i, 0] >= 2 || Count[i, \[Infinity]] >= 2
 Contiguous0Inf[i_] := SequenceCases[i, {0, 0}] != {} || SequenceCases[i, {\[Infinity], \[Infinity]}] != {}
 
 
-(* definition of the exported functions *)
+(* Definition of the exported functions *)
 
 (* GradeQ returns True if x contains only terms of grade r *)
-GradeQ[a_, r_?NumberQ]:= If[r === 0, True, False]     /; FreeQ[a, e[__]] 
+GradeQ[a_, r_?NumberQ] := If[r === 0, True, False]                 /; FreeQ[a, e[__]]
 GradeQ[e[i__], r_?NumberQ] := If[Length[{i}] === r, True , False]
-GradeQ[(a_: 1) e[i__], r_?NumberQ]:= GradeQ[e[i], r]  /; FreeQ[a, e[_]] 
+GradeQ[(a_: 1) e[i__], r_?NumberQ] := GradeQ[e[i], r]               /; FreeQ[a, e[_]]
 GradeQ[x_Plus, r_?NumberQ] := And @@ (GradeQ[#, r] & /@ Apply[List, x])
 
 (* MultiplicationTable returns the multiplication table for Clifford products *)
@@ -132,7 +133,110 @@ GFactor[x_] := Collect[Expand[x], e[__]]
    to the standard Mathematica notation {x,y,x} *)
 ToVector[v_]:= Table[Coefficient[v, e[i]], {i, 3}] /; GradeQ[v,1] && Coefficient[v,e[0]]==0 && Coefficient[v,e[\[Infinity]]]==0
 
-(* The RELATIONS of the conformal geometric algebra and its generaliations *)
+(* Changes of variables *)
+
+(* From (e[4], e[5]) to (e[0], e[Infinity]) *)
+From45To0I[a_] := a                                    /; FreeQ[a, e2[__]] 
+From45To0I[x_ + y_] := From45To0I[x] + From45To0I[y]
+From45To0I[a_ e2[i__]] := a From45To0I[e2[i]]          /; FreeQ[a, e2[__]]
+From45To0I[e2[i__]] := (Replace[e2[i], {e2[4] -> e[0] - e[\[Infinity]]/2, e2[5] -> e[0] + e[\[Infinity]]/2,e2[1] -> e[1],e2[2] -> e[2],e2[3] -> e[3] }] //Expand)/; Length[{i}] == 1
+From45To0I[e2[i__]] := GeometricProduct @@ ((e2 /@ List @@ e2[i]) /. {e2[4] -> e[0] - e[\[Infinity]]/2, e2[5] -> e[0] + e[\[Infinity]]/2 ,e2[1] -> e[1],e2[2] -> e[2],e2[3] -> e[3]})  // Expand
+
+(* From (e[0], e[Infinity]) to (e[4], e[5]) *)
+FromOITo45[a_] := a                                    /; FreeQ[a, e[__]] 
+FromOITo45[x_ + y_] := FromOITo45[x] + FromOITo45[y]
+FromOITo45[a_ e[i__]] := a FromOITo45[e[i]]            /; FreeQ[a, e[__]]
+FromOITo45[e[i__]] := (Replace[e[i], {e[0] -> (e2[4] + e2[5])/2, e[\[Infinity]] -> e2[5] - e2[4],e[1] -> e2[1],e[2] -> e2[2],e[3] -> e2[3]}]//Expand) /; Length[{i}] == 1
+FromOITo45[e[i__]] := (GeometricProduct2@@ ((e /@ List @@ e[i]) /. {e[0] -> (e2[4] + e2[5])/2, e[\[Infinity]] -> e2[5] - e2[4] ,e[1] -> e2[1],e[2] -> e2[2],e[3] -> e2[3]})//Expand)  /; Length[{i}]>1
+
+(*End of changes of variable*)
+
+(*Begin of clifford's definitions*)
+
+(*GFactor groups terms with commom e[__]*)
+GFactor2[x_] := Collect[Expand[x],e2[__]]
+
+(*Pseudoscalar function*)
+Pseudoscalar[n_/;Element[n,Integers]&&n>0] := e2@@(Range[n])
+
+(*HomogeneousQ function*)
+HomogeneousQ[x_,r_/;Element[r,Integers]&&NonNegative[r]] := Simplify[Expand[x]===Grade2[x,r]]
+
+(* Begin of the Clifford algebra of R^{p,q}; the basis vectors are denoted as e2[], and the functions are added the digit 2  *)
+
+(* GFactor groups terms with commom e[__] *)
+GFactor2[x_] := Collect[Expand[x],e2[__]]
+
+(* Pseudoscalar function *)
+Pseudoscalar[n_/;Element[n,Integers]&&n>0] := e2@@(Range[n])
+
+(* HomogeneousQ returns True if the input is an homogeneous multivector *)
+HomogeneousQ[x_,r_/;Element[r,Integers]&&NonNegative[r]] := Simplify[Expand[x]===Grade2[x,r]]
+
+(* The RELATIONS of the Clifford algebra *)
+e2[]:=1
+e2[i_Integer,j__Integer] := e2[]                               /; i==j && i<=4 && EvenQ[Length[{i,j}]] && i>=0
+e2[i_Integer,j__Integer] := e2[i]                              /; i==j && i<=4 && OddQ[Length[{i,j}]] && i>=0
+e2[i_Integer,j__Integer] := (-e2[])^(Length[{i,j}]/2)          /; i==j && i>4 && i<=5&&EvenQ[Length[{i,j}]] && i>=0
+e2[i_Integer,j__Integer] :=(-e2[])^((Length[{i,j}]-1)/2) e2[i] /; i==j && i>4 && i<=5&&OddQ[Length[{i,j}]] && i>=0
+e2[i_Integer,j__Integer] :=0/;i==j&&Max[{i,j}]>5&&AllTrue[{i,j},NonNegative]
+e2[i_Integer,j_Integer] :=-e2[j,i]                             /; i!=j && i>j && AllTrue[{i,j},NonNegative]
+e2[i__Integer] := Signature[Ordering[{i}]] Apply[e2,Sort[{i}]] /; !OrderedQ[{i}] && AllTrue[{i},NonNegative]
+e2[i__Integer] := (Times@@(Apply[e2,Gather[{i}],1]/. e2[_]->1))*e2@@(Cases[Apply[e2,Gather[{i}],1],Except[_Integer]]/. (e2[x_]|a_ e2[x_])->x)                                                                   /; OrderedQ[{i}] && !DuplicateFreeQ[{i}] && AllTrue[{i},Positive]
+
+(* Begin Geometric Product Section *)
+GeometricProduct2[_] := $Failed
+GeometricProduct2[x_,y_] := GeometricProduct2[Expand[x],Expand[y]]          /; x=!=Expand[x] || y=!=Expand[y]
+GeometricProduct2[x_,y_,z__] := Fold[GeometricProduct2,Expand[x],{Expand[y],z}]//Simplify
+GeometricProduct2[x_,y_+z_] := GeometricProduct2[x,y]+GeometricProduct2[x,z]
+GeometricProduct2[x_+y_,z_] := GeometricProduct2[x,z]+GeometricProduct2[y,z]
+GeometricProduct2[a_,b_] := a b e2[]                                        /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+GeometricProduct2[a_,(b_:1) e2[i__/;SubsetQ[Range[5],{i}]]] := a b e2[i]    /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+GeometricProduct2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]],b_] := a b e2[i]    /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+GeometricProduct2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]],(b_:1) e2[j__/;SubsetQ[Range[5],{j}]]] := a b e2[i,j]  /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+(* End of Geometric Product Section *)
+
+(* Begin Grade Section *)
+Grade2[a_,r_/;Element[r,Integers]] := If[r===0,a,0]        /; FreeQ[a,e2[__]]
+Grade2[x_,r_/;Element[r,Integers]] := Grade2[Expand[x],r]  /; x=!=Expand[x]
+Grade2[x_,r_/;Element[r,Integers]] := 0                    /;r<0
+Grade2[x_+y_,r_/;Element[r,Integers]] := Grade2[x,r]+Grade2[y,r]
+Grade2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]],r_/;Element[r,Integers]]:=If[Length[{i}]===r,a e2[i],0]
+(* End of Grade Section *)
+
+(* Begin Inner Product Section *) 
+InnerProduct2[_] := $Failed
+InnerProduct2[x_,y_] := InnerProduct2[Expand[x], Expand[y]]         /; x=!=Expand[x] || y=!=Expand[y]
+InnerProduct2[x_,y_+z_] := InnerProduct2[x,y]+InnerProduct2[x,z]
+InnerProduct2[x_+y_,z_] := InnerProduct2[x,z]+InnerProduct2[y,z]
+InnerProduct2[a_,b_] := 0                                          /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+InnerProduct2[a_,(b_:1) e2[i__/;SubsetQ[Range[5],{i}]]] :=0        /; FreeQ[a,e2[__]]
+InnerProduct2[(b_:1) e2[i__/;SubsetQ[Range[5],{i}]],a_] :=0        /; FreeQ[a,e2[__]]
+(* A la Hestenes *)
+InnerProduct2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]],(b_:1) e2[j__/;SubsetQ[Range[5],{j}]]] := Grade2[a b e2[i,j],Abs[Length[{i}]-Length[{j}]]] /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+(* Dorst, Fontijne and Mann definition (with no absolute value as in Hestenes) *)
+(* InnerProduct2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]], (b_:1) e2[j__/;SubsetQ[Range[5],{i}]]] := 0   /; FreeQ[a, e2[__]] && FreeQ[b, e2[__]] && Length[{i}] > Length[{j}] *)
+(* InnerProduct2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]], (b_:1) e2[j__/;SubsetQ[Range[5],{j}]]] := Grade2[a b e2[i,j], Length[{j}] - Length[{i}]]  /; FreeQ[a, e2[__]] && FreeQ[b, e2[__]] && Length[{j}] >= Length[{i}] *)
+
+(* End of Inner Product Section *)
+
+(* Begin Outer Product Section *)
+OuterProduct2[_] := $Failed
+OuterProduct2[x_,y_] := OuterProduct2[Expand[x],Expand[y]]              /; x=!=Expand[x] || y=!=Expand[y]
+OuterProduct2[x_,y_,z__] := Fold[OuterProduct2,x,{y,z}]//Simplify
+OuterProduct2[x_,y_+z_] := OuterProduct2[x,y]+OuterProduct2[x,z]
+OuterProduct2[x_+y_,z_] := OuterProduct2[x,z]+OuterProduct2[y,z]
+OuterProduct2[a_,b_] := a b                                             /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+OuterProduct2[a_,(b_:1) e2[i__/;SubsetQ[Range[5],{i}]]] := a b e2[i]    /; FreeQ[a,e2[__]]
+OuterProduct2[(b_:1) e2[i__/;SubsetQ[Range[5],{i}]],a_] := a b e2[i]    /; FreeQ[a,e2[__]]
+OuterProduct2[(a_:1) e2[i__/;SubsetQ[Range[5],{i}]],(b_:1) e2[j__/;SubsetQ[Range[5],{j}]]] := Grade2[a b e2[i,j],Length[{i}]+Length[{j}]]      /; FreeQ[a,e2[__]] && FreeQ[b,e2[__]]
+(* End of Outer Product Section *)
+
+(* End of the Clifford algebra of R^{p,q} section *)
+
+
+
+(* The relations of the CONFORMAL GEOMETRIC ALGEBRA and its generaliations *)
 e[] := 1
 (* The next definitions takes care of the existence of a 0 after an \[Infinity], despite duplication *)
 e[i___Integer, j___] := 0      /; Count[{i}, 0] >= 2 || (DuplicateQ0Inf[{j}] && (Max[Position[{j}, 0]] < FirstPosition[{j}, \[Infinity]][[1]] || Contiguous0Inf[{i}] ))
@@ -149,6 +253,7 @@ e[i__] := Module[{es = Cases[Apply[e, Gather[{i}], 1], Except[_Integer]]},
 e[i___Integer, \[Infinity], j__Integer, k___] := 
    Signature[Ordering[{j}]] (-2 e @@ Join[{i}, DeleteCases[Sort[{j}], 0], {k}] - e @@ Join[{i}, {0, \[Infinity]}, DeleteCases[Sort[{j}], 0], {k}])   /; MemberQ[{j}, 0]
 e[i___Integer, \[Infinity], j__Integer, k___] := 0   /; Count[{i}, 0] >= 2  && ! MemberQ[{j}, 0] && FirstPosition[{k}, \[Infinity]][[1]] < FirstPosition[{k}, 0][[1]]
+
 
 (* GeometricProduct returns the geometric product between two or more multivectors *)
 GeometricProduct[x_, y_] := GeometricProduct[Expand[x], Expand[y]]   /;  x =!= Expand[x] || y =!= Expand[y]
@@ -167,34 +272,17 @@ Grade[x_, r_?NumberQ] := Grade[Expand[x], r]   /; x =!= Expand[x]
 Grade[x_ + y_, r_?NumberQ] := Grade[x, r] + Grade[y, r]
 Grade[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], r_?NumberQ] := If[Length[{i}] === r, a e[i], 0]
 
-(* OuterProduct returns the outer product between two or more multivectors *)
-OuterProduct[_] := $Failed
-OuterProduct[x_, y_] :=  OuterProduct[Expand[x], Expand[y]]   /;  x =!= Expand[x] || y =!= Expand[y]
-OuterProduct[e[i_],e[j_]] := Expand[(GeometricProduct[e[i],e[j]] - GeometricProduct[e[j],e[i]])/2]  /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}] && SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]
-OuterProduct[x_, y_, z__] := Fold[OuterProduct, x, {y, z}] // Simplify
-OuterProduct[x_, y_ + z_] := OuterProduct[x, y] + OuterProduct[x, z]
-OuterProduct[x_ + y_, z_] := OuterProduct[x, z] + OuterProduct[y, z]
-OuterProduct[a_, b_] := a b        /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-OuterProduct[a_, (b_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]]] := a b e[i]       /; FreeQ[a, e[__]]
-OuterProduct[(b_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], a_] := a b e[i]       /; FreeQ[a, e[__]]
-OuterProduct[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], (b_: 1) e[j__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]]] :=
-              Grade[a b GeometricProduct[G[i], G[j]], Length[{i}] + Length[{j}]]        /;  FreeQ[a, e[__]] && FreeQ[b, e[__]]
 
-(* InnerProduct returns the inner product between two or more multivectors
-   Dorst, Fontijne and Mann definition is used, that is no absolute value as in Hestenes
-*)
+(*OuterProduct returns the outer product between two or more multivectors*)
+OuterProduct[_] := $Failed
+OuterProduct[x_,y_] := OuterProduct[Expand[x],Expand[y]]        /; x=!=Expand[x] || y=!=Expand[y]
+OuterProduct[x_,y_] := From45To0I[OuterProduct2[FromOITo45[x], FromOITo45[y]]//Expand] //Expand
+OuterProduct[x_,y_,z__] := Fold[OuterProduct,x,{y,z}] //Simplify
+
+(* InnerProduct returns the inner product between two or more multivectors *)
 InnerProduct[_] := $Failed
-InnerProduct[x_, y_] := InnerProduct[Expand[x], Expand[y]]                                    /;  x =!= Expand[x] || y =!= Expand[y]
-InnerProduct[x_, y_] := 1/2 (GeometricProduct[x, y] + GeometricProduct[y, x ])                /;  GradeQ[x, 1] && GradeQ[y, 1]
-InnerProduct[x_, y_ + z_] := InnerProduct[x, y] + InnerProduct[x, z]
-InnerProduct[x_ + y_, z_] := InnerProduct[x, z] + InnerProduct[y, z]
-InnerProduct[a_, b_] := a b                                                                   /; FreeQ[a, e[__]] && FreeQ[b, e[__]]
-InnerProduct[a_, (b_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]]] := a b e[i]       /; FreeQ[a, e[__]]
-InnerProduct[(b_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], a_] := 0              /; FreeQ[a, e[__]]
-InnerProduct[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], (b_: 1) e[j__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]]] := 
-              0            /; FreeQ[a, e[__]] && FreeQ[b, e[__]] && Length[{i}] > Length[{j}]
-InnerProduct[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]], (b_: 1) e[j__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {j}]]] := 
-              Grade[a b GeometricProduct[G[i], G[j]], Length[{j}] - Length[{i}]]        /; FreeQ[a, e[__]] && FreeQ[b, e[__]] && Length[{j}] >= Length[{i}]
+InnerProduct[x_,y_] := InnerProduct[Expand[x],Expand[y]]        /; x=!=Expand[x] || y=!=Expand[y]
+InnerProduct[x_,y_] := From45To0I[InnerProduct2[FromOITo45[x],FromOITo45[y]] //Expand]//Expand
 
 (* Reversion returns the reversion of a multivector *)
 Reversion[_] := $Failed
