@@ -525,27 +525,7 @@ untransform[x_] := x //. {e[2]e[3] -> -i, e[1]e[3] -> j, e[1]e[2] -> -k}
 (* Begin GAarrow section
    This function generates the arrow of a vector *)
 
-GAarrow[p_, color_] := Module[{sc,elms,cone,arrow,t,mat},
-	{
-	(*Scale factor*)
-	sc = Sqrt[p[[1]]^2 + p[[2]]^2 + p[[3]]^2]/2,
-	(* The code for creating the cone was taken from the book Mathematica Graphics: Techniques and Applications. *)
-	mat[1] = Sin[t]*(e[1]/14) + Cos[t]*(e[2]/14),
-	mat[2] = Sin[t + 0.25]*(e[1]/14) + Cos[t + 0.25]*(e[2]/14),
-	mat[3] = e[3]/5,
-	(*Rotates, translates and create the cone*)
-	If[OuterProduct[ToBasis[p],e[3]]===0,
-		cone=Table[Array[ToVector[mat[#],3]&,3]+Array[p-ToVector[mat[3],3]&,3],{t,0.25,2*Pi,0.25}],
-		elms=Array[sc*ToVector[Grade[Rotation[mat[#],e[3],ToBasis[p]],1],3]&,3];
-		cone= Table[
-			elms+Array[p-elms[[3]]&,3],
-			{t, 0.25, 2*Pi, 0.25}
-		]
-	], 
-	(*Creates the 3D primitive graphic for the cone*)
-	arrow = Graphics3D[{FaceForm[color], EdgeForm[], Polygon /@ cone},Lighting->Automatic]}; 
-    arrow
-]
+GAarrow[arrowHeadPosition_List, color_] /; MatchQ[Length[arrowHeadPosition],3] := Graphics3D[{color, Arrow[{{0, 0, 0}, arrowHeadPosition}]}]
 
 (* Begin DrawVec section. This function plots a tri-vector *)
 DrawVec[x_] := Module[
