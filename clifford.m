@@ -528,57 +528,50 @@ untransform[x_] := x //. {e[2]e[3] -> -i, e[1]e[3] -> j, e[1]e[2] -> -k}
 GAarrow[arrowHeadPosition_List, color_] /; MatchQ[Length[arrowHeadPosition],3] := Graphics3D[{color, Arrow[{{0, 0, 0}, arrowHeadPosition}]}]
 
 (* Begin DrawVec section. This function plots a tri-vector *)
-DrawVec[x_] := Module[
+DrawVec[multivector_] := Module[
 	{points, graph, color, aux, arrow}, 
 	{
 		cc := Random[Real, {0, 1}], 
-		color = RGBColor[cc, cc, cc], 
-		points = ToVector[x, 3], arrow = GAarrow[points, color], 
+		color = RGBColor[cc, cc, cc],  (* do we want to use random colors for a palette? I think it's better to choose a palette which is also colorblind compatible*)
+		points = ToVector[multivector, 3], 
+		arrow = GAarrow[points, color], 
 		aux = Graphics3D[{color, Line[{{0, 0, 0}, points}]}],
 		graph = {{arrow, aux}}
 	}; 
-	{graph, scalar}
+	{graph, scalar} (* scalar is not defined/evaluated anywhere?*)
 ]
 
 (* Begin DrawBiVec section. This function plots a bi-vector *)
 DrawBiVec[x_] := If[Length[x] > 3, Message[DrawBiVec::"Out of Dimension", x]; $Failed, f]; 
 
 DrawBiVec[x_] := Module[
-	{xx, i, flag, pos, q, d, theta, rot1, rot2, rot, r, graph, fac, t1, t2, w, cc}, 
+	{flag, pos, q, d, theta, rot1, rot2, rot, r, graph, fac, t1, t2, w, cc}, 
 	{
 		cc := Random[Real, {-1, 1}],
 		If[Head[x] === Plus, 
-			{
-				xx = x, 
-				For[
-					i = 1, 
-					i <= Length[x],
-					b[i] = x[[i]];
-					i++
-				],
+			(
 				If[Length[x] == 3, 
 					flag = 1, 
 					flag = 0
-				],
-				For[
-					i = 1, 
-					i <= Length[x],
-					{
-						If[Length[b[i]] > 2, 
-							{
-								scalar[i] = b[i][[1]], 
-								b[i] = Delete[b[i], 1],
-								c[i] = b[i] /. e[s_]*e[t_] -> {s, t}
-							}, 
-							{
-								scalar[i] = 1,
-								c[i] = b[i] /. e[s_]*e[t_] -> {s, t}
-							}
-						]
-					}; 
-					i++
-				],
-				If[c[1][[1]] === c[2][[1]], 
+				];
+				scalar = 
+					Replace[
+						x /. Plus -> List,
+						{
+							bivec_ /; Length[bivec] > 2  :> First[bivec],
+							bivec_ :> 1
+						},
+						1
+					];
+				baseIndexes = 
+					ReplaceAll[
+						x,
+						{
+							Plus -> List,
+							Times[e[s_], e[t_]] -> {s, t}
+						}
+					];	
+				If[baseIndexes[[1]][[1]] === baseIndexes[[2]][[1]], 
 					{
 						pos = 1, 
 						q = {
@@ -589,8 +582,8 @@ DrawBiVec[x_] := Module[
 						}
 					},
 					pos = pos
-				], 
-				If[c[1][[2]] === c[2][[1]],
+				];
+				If[baseIndexes[[1]][[2]] === baseIndexes[[2]][[1]],
 					{
 						pos = 2, 
 						q = {
@@ -601,8 +594,8 @@ DrawBiVec[x_] := Module[
 						}
 					},
 					pos = pos
-				], 
-				If[c[1][[2]] === c[2][[2]],
+				];
+				If[baseIndexes[[1]][[2]] === baseIndexes[[2]][[2]],
 					{
 						pos = 3, 
 						q = {
@@ -613,18 +606,18 @@ DrawBiVec[x_] := Module[
 						}
 					},
 					pos = pos
-				], 
-				d = Insert[{0, 0}, 1, pos], 
-				theta = ArcTan[scalar[2]/scalar[1]], 
-				fac = Sqrt[scalar[1]^2 + scalar[2]^2], 
-				rot1 = {Cos[theta], -Sin[theta]},
-				rot2 = {Sin[theta], Cos[theta]}, 
-				rot = Insert[{Insert[rot1, 0, pos], Insert[rot2, 0, pos]}, d, pos],
-				r = fac*q . rot, 
+				];
+				d = Insert[{0, 0}, 1, pos]; 
+				theta = ArcTan[scalar[[2]]/scalar[[1]]];
+				fac = Sqrt[scalar[[1]]^2 + scalar[[2]]^2]; 
+				rot1 = {Cos[theta], -Sin[theta]};
+				rot2 = {Sin[theta], Cos[theta]}; 
+				rot = Insert[{Insert[rot1, 0, pos], Insert[rot2, 0, pos]}, d, pos];
+				r = fac*q . rot;
 				If[flag == 1, 
 					{
-						theta = ArcTan[scalar[3]/fac];
-						fac = Sqrt[fac^2 - scalar[3]^2];
+						theta = ArcTan[scalar[[3]]/fac];
+						fac = Sqrt[fac^2 - scalar[[3]]^2];
 						rot = {
 							{Cos[theta], -Sin[theta], 0}, 
 							{Sin[theta], Cos[theta], 0}, 
@@ -633,17 +626,17 @@ DrawBiVec[x_] := Module[
 						r = fac*r . rot
 					}, 
 					r = r
-				], 
+				];
 				graph = Graphics3D[{
 					Polygon[r], 
 					Text[
-						xx, 
+						x, 
 						{0, 0, 0},
 						Background -> GrayLevel[1]
 					]
 					}
 				]
-			}, 
+			), 
 			{
 				xx = x, 
 				If[NumberQ[fac = x[[1]]],
@@ -679,7 +672,7 @@ DrawBiVec[x_] := Module[
 						graph = Graphics3D[
 							{
 								Polygon[r],
-								Text[xx, {0, 0, 0}, Background -> GrayLevel[1]]
+								Text[x, {0, 0, 0}, Background -> GrayLevel[1]]
 							}
 						]
 					}
