@@ -684,51 +684,51 @@ DrawBiVec[x_] := Module[
 ]
 
 (* Begin DrawTriVec section. This function plots a tri-vector *)
-DrawTriVec[y_] := Module[
-	{xx, x, fac, t, p, graph}, 
-	{
-		xx = x = y, 
-		x = List @@ Distribute[x], 
-		If[NumberQ[fac = x[[1]]],
-			x = Drop[x, 1], 
-			{
-				x = x,
-				fac = 1
-			}
-		],
-		t = x[[3]] /. e[s_] -> s,
-		If[t < 4, 
-			{
-				fac = Abs[fac], 
-				p = fac* {
-					{-1, -1, -1},
-					{1, -1, -1}, 
-					{1, 1, -1}, 
-					{-1, 1, -1}, 
-					{-1, -1, -1}, 
-					{-1, -1, 1}, 
-					{1, -1, 1}, 
-					{1, 1, 1}, 
-					{-1, 1, 1}, 
-					{-1, -1, 1},
-					{1, -1, 1}, 
-					{1, -1, -1},
-					{1, 1, -1},
-					{1, 1, 1},
-					{-1, 1, 1}, 
-					{-1, 1, -1}, 
-					{1, -1, 1}, 
-					{1, -1, -1}, 
-					{-1, 1, 1}, 
-					{-1, -1, 1}, 
-					{1, 1, -1}, 
-					{1, 1, 1}, 
-					{-1, -1, -1}
-				}, 
-				graph = Graphics3D[{RGBColor[0, 0, 1], Line[p]}]
-			}
-		]
-	}; 
+DrawTriVec[trivector_] := Module[
+	{listedArgument, factor, t, p, graph, trivactorComponents}, 
+	listedArgument = List @@ Distribute[trivector];
+	If[NumberQ[First[listedArgument]],
+		(
+			factor = First[listedArgument];
+			trivactorComponents = Drop[listedArgument, 1];
+		),
+		(
+			factor = 1;
+			trivactorComponents = listedArgument;
+		)
+	];
+	t = trivactorComponents[[3]] /. e[s_] -> s;
+	If[t < 4,
+		( 
+			factor = Abs[factor];
+			p = factor* {
+				{-1, -1, -1},
+				{1, -1, -1}, 
+				{1, 1, -1}, 
+				{-1, 1, -1}, 
+				{-1, -1, -1}, 
+				{-1, -1, 1}, 
+				{1, -1, 1}, 
+				{1, 1, 1}, 
+				{-1, 1, 1}, 
+				{-1, -1, 1},
+				{1, -1, 1}, 
+				{1, -1, -1},
+				{1, 1, -1},
+				{1, 1, 1},
+				{-1, 1, 1}, 
+				{-1, 1, -1}, 
+				{1, -1, 1}, 
+				{1, -1, -1}, 
+				{-1, 1, 1}, 
+				{-1, -1, 1}, 
+				{1, 1, -1}, 
+				{1, 1, 1}, 
+				{-1, -1, -1}
+			}; 
+			graph = Graphics3D[{RGBColor[0, 0, 1], Line[p]}]
+		)
+	];
 	graph
 ]
 
