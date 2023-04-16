@@ -538,7 +538,7 @@ DrawVec[multivector_] := Module[
 		aux = Graphics3D[{color, Line[{{0, 0, 0}, points}]}],
 		graph = {{arrow, aux}}
 	}; 
-	{graph, scalar} (* scalar is not defined/evaluated anywhere?*)
+	{graph} (* scalar is not defined/evaluated anywhere?*)
 ]
 
 (* Begin DrawBiVec section. This function plots a bi-vector *)
@@ -546,140 +546,116 @@ DrawBiVec[x_] := If[Length[x] > 3, Message[DrawBiVec::"Out of Dimension", x]; $F
 
 DrawBiVec[x_] := Module[
 	{flag, pos, q, d, theta, rot1, rot2, rot, r, graph, fac, t1, t2, w, cc}, 
-	{
-		cc := Random[Real, {-1, 1}],
-		If[Head[x] === Plus, 
-			(
-				If[Length[x] == 3, 
-					flag = 1, 
-					flag = 0
+	cc := Random[Real, {-1, 1}];
+	If[Head[x] === Plus, 
+		(
+			If[Length[x] == 3, 
+				flag = 1, 
+				flag = 0
+			];
+			scalar = 
+				Replace[
+					x /. Plus -> List,
+					{
+						bivec_ /; Length[bivec] > 2  :> First[bivec],
+						bivec_ :> 1
+					},
+					1
 				];
-				scalar = 
-					Replace[
-						x /. Plus -> List,
-						{
-							bivec_ /; Length[bivec] > 2  :> First[bivec],
-							bivec_ :> 1
-						},
-						1
+			baseIndexes = 
+				ReplaceAll[
+					x,
+					{
+						Plus -> List,
+						Times[e[s_], e[t_]] -> {s, t}
+					}
+				];
+			pos = 
+				Switch[
+					baseIndexes,
+						{{s_, t_}, {t_, s_}} /; s === t, 
+							1,
+						{{s_, t_}, {u_, t_}} /; s === u, 
+							2,
+						{{s_, t_}, {t_, u_}} /; s === u, 
+							3,
+						_, 
+							0
+				];
+			q = 
+				Switch[
+					pos, 
+						1 | 2, 
+							{{1, 1, 0}, {-1, 1, 0}, {-1, -1, 0}, {1, -1, 0}}, 
+						3, 
+							{{1, 0, 1}, {-1, 0, 1}, {-1, 0, -1}, {1, 0, -1}}, 
+						_, 
+							{}
+				];
+			d = Insert[{0, 0}, 1, pos]; 
+			theta = ArcTan[scalar[[2]]/scalar[[1]]];
+			fac = Sqrt[scalar[[1]]^2 + scalar[[2]]^2]; 
+			rot1 = {Cos[theta], -Sin[theta]};
+			rot2 = {Sin[theta], Cos[theta]}; 
+			rot = Insert[{Insert[rot1, 0, pos], Insert[rot2, 0, pos]}, d, pos];
+			r = fac*q . rot;
+			If[flag == 1, 
+				theta = ArcTan[scalar[[3]]/fac];
+				fac = Sqrt[fac^2 - scalar[[3]]^2];
+				rot = {
+					{Cos[theta], -Sin[theta], 0}, 
+					{Sin[theta], Cos[theta], 0}, 
+					{0, 0, 1}
+				}, 
+				r = fac*r . rot
+			];
+			graph = Graphics3D[{
+				Polygon[r], 
+				Text[
+					x, 
+					{0, 0, 0},
+					Background -> GrayLevel[1]
+				]
+				}
+			];
+		), 
+		(
+			If[NumberQ[fac = x[[1]]],
+				w = Rest[x], 
+				w = x;
+				fac = 1
+			]; 
+			t1 = w[[1]] /. e[s_] -> s;
+			t2 = w[[2]] /. e[h_] -> h; 
+			If[t2 < 4, 
+				pos = 
+					Switch[
+						{t1, t2}, 
+							{1, 2}, 
+								3, 
+							{2, 3}, 
+								1, 
+							{1, 3}, 
+								2, 
+							_, 
+								0
 					];
-				baseIndexes = 
-					ReplaceAll[
-						x,
-						{
-							Plus -> List,
-							Times[e[s_], e[t_]] -> {s, t}
-						}
-					];	
-				If[baseIndexes[[1]][[1]] === baseIndexes[[2]][[1]], 
+				fac = Abs[fac];
+				r = {
+					fac*Insert[{1, 1}, 0, pos], 
+					fac*Insert[{-1, 1}, 0, pos],
+					fac*Insert[{-1, -1}, 0, pos],
+					fac*Insert[{1, -1}, 0, pos]
+				};				
+				graph = Graphics3D[
 					{
-						pos = 1, 
-						q = {
-							{1, 1, 0}, 
-							{-1, 1, 0}, 
-							{-1, -1, 0}, 
-							{1, -1, 0}
-						}
-					},
-					pos = pos
-				];
-				If[baseIndexes[[1]][[2]] === baseIndexes[[2]][[1]],
-					{
-						pos = 2, 
-						q = {
-							{1, 1, 0}, 
-							{-1, 1, 0}, 
-							{-1, -1, 0}, 
-							{1, -1, 0}
-						}
-					},
-					pos = pos
-				];
-				If[baseIndexes[[1]][[2]] === baseIndexes[[2]][[2]],
-					{
-						pos = 3, 
-						q = {
-							{1, 0, 1}, 
-							{-1, 0, 1}, 
-							{-1, 0, -1}, 
-							{1, 0, -1}
-						}
-					},
-					pos = pos
-				];
-				d = Insert[{0, 0}, 1, pos]; 
-				theta = ArcTan[scalar[[2]]/scalar[[1]]];
-				fac = Sqrt[scalar[[1]]^2 + scalar[[2]]^2]; 
-				rot1 = {Cos[theta], -Sin[theta]};
-				rot2 = {Sin[theta], Cos[theta]}; 
-				rot = Insert[{Insert[rot1, 0, pos], Insert[rot2, 0, pos]}, d, pos];
-				r = fac*q . rot;
-				If[flag == 1, 
-					{
-						theta = ArcTan[scalar[[3]]/fac];
-						fac = Sqrt[fac^2 - scalar[[3]]^2];
-						rot = {
-							{Cos[theta], -Sin[theta], 0}, 
-							{Sin[theta], Cos[theta], 0}, 
-							{0, 0, 1}
-						}, 
-						r = fac*r . rot
-					}, 
-					r = r
-				];
-				graph = Graphics3D[{
-					Polygon[r], 
-					Text[
-						x, 
-						{0, 0, 0},
-						Background -> GrayLevel[1]
-					]
+						Polygon[r],
+						Text[x, {0, 0, 0}, Background -> GrayLevel[1]]
 					}
 				]
-			), 
-			{
-				xx = x, 
-				If[NumberQ[fac = x[[1]]],
-					w = Drop[x, 1], 
-					{
-						w = x, 
-						fac = 1
-					}
-				], 
-				t1 = w[[1]] /. e[s_] -> s, 
-				t2 = w[[2]] /. e[h_] -> h, 
-				If[t2 < 4, 
-					{
-						If[t1 == 1 && t2 == 2, 
-							pos = 3, 
-							Null
-						], 
-						If[t1 == 2 && t2 == 3, 
-							pos = 1, 
-							Null
-						], 
-						If[t1 == 1 && t2 == 3, 
-							pos = 2, 
-							Null
-						], 
-						fac = Abs[fac], 
-						r = {
-							fac*Insert[{1, 1}, 0, pos], 
-							fac*Insert[{-1, 1}, 0, pos],
-							fac*Insert[{-1, -1}, 0, pos],
-							fac*Insert[{1, -1}, 0, pos]
-						},
-						graph = Graphics3D[
-							{
-								Polygon[r],
-								Text[x, {0, 0, 0}, Background -> GrayLevel[1]]
-							}
-						]
-					}
-				]
-			}
-		]
-	};
+			]
+		)
+	];
 	graph
 ]
 
@@ -732,55 +708,30 @@ DrawTriVec[trivector_] := Module[
 	graph
 ]
 
+
+
 (* Begin Draw section *)
 GADraw[x_, v_:{ViewPoint -> {1.3, -2.4, 2}}] := Module[
-	{vec, bivec, graphvec, graphbivec, graph, msg, trivec},
 	{
 		msg = Grade[x, 0],
 		vec = Grade[x, 1],
 		bivec = Grade[x, 2],
-		trivec = Grade[x, 3],
-		If[vec === 0, 
-			If[bivec === 0, 
-				graph = graph, 
-				{
-					graphbivec = DrawBiVec[bivec], 
-					graph = {graphbivec}
-				}
-			], 
-			If[
-				bivec === 0, 
-				{
-					graphvec = DrawVec[vec][[1]],
-					graph = {graphvec}
-				}, 
-				{
-					graphbivec = DrawBiVec[bivec], 
-					graphvec = DrawVec[vec][[1]], 
-					graph = {graphvec, graphbivec}
-				}
-			]
-		],
-		If[trivec === 0, 
-			graph = graph, 
+		trivec = Grade[x, 3], 
+		graph
+	},
+	graph = 
+		Join[
 			{
-				len = Length[graph],
-				If[len > 0, 
-					graph = 
-						Append[
-							graph, 
-							DrawTriVec[trivec]
-						], 
-					graph = DrawTriVec[trivec]
-				]
+			If[vec === 0, {}, DrawVec[vec]],
+			If[bivec === 0, {}, DrawBiVec[bivec]],
+			If[trivec === 0, {}, DrawTriVec[trivec]]
 			}
-		],
-		eje1 = "\!\(e\_1\)", 
-		eje2 = "\!\(e\_2\)", 
-		eje3 = "\!\(e\_3\)",
-		ax = {eje1, eje2, eje3}, 
-		Null
-	};
+		];
+	graph = Flatten[graph, 1];
+	eje1 = "\!\(e\_1\)";
+	eje2 = "\!\(e\_2\)";
+	eje3 = "\!\(e\_3\)";
+	ax = {eje1, eje2, eje3};
 	Show[
 		graph, 
 		Axes -> True,
@@ -803,7 +754,7 @@ End[]  (* End the Private Context *)
 
 
 (* Protect exported symbols *)
-(*
+
 Protect[ GeometricProduct, Grade, Turn, Magnitude, Dual, InnerProduct,
          OuterProduct, Rotation, MultivectorInverse, Reflection, HomogeneousQ,
          CProjection, Rejection, ToBasis, ToVector, QuaternionProduct,
@@ -811,6 +762,6 @@ Protect[ GeometricProduct, Grade, Turn, Magnitude, Dual, InnerProduct,
          GeometricPower, GeometricProductSeries, GeometricExp, GeometricSin,
          GeometricCos, GeometricTan, Pseudoscalar, e, i, j, k, Coeff, GADraw
          ]
-*)
+
 
 EndPackage[]  (* End the Package Context *)
