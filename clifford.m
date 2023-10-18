@@ -544,9 +544,9 @@ DrawVec[multivector_] := Module[
 (* Begin DrawBiVec section. This function plots a bi-vector *)
 DrawBiVec[x_] := If[Length[x] > 3, Message[DrawBiVec::"Out of Dimension", x]; $Failed, f]; 
 
+
 DrawBiVec[x_] := Module[
-	{flag, pos, q, d, theta, rot1, rot2, rot, r, graph, fac, t1, t2, w, cc}, 
-	cc := Random[Real, {-1, 1}];
+	{flag, pos, scalar, baseIndexes, q, d, theta, rot1, rot2, rot, r, graph, fac, t1, t2, w}, 
 	If[Head[x] === Plus, 
 		(
 			If[Length[x] == 3, 
