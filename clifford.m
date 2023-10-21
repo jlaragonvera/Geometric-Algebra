@@ -1,7 +1,5 @@
 (* ::Package:: *)
 
-
-
 (* Set up the Package Context. *)
 
 (* :Title: Clifford Algebra with Mathematica *)
@@ -518,102 +516,202 @@ transform[x_] := x //. {i -> -e[2]e[3], j -> e[1]e[3], k -> -e[1]e[2]}
 untransform[x_] := x //. {e[2]e[3] -> -i, e[1]e[3] -> j, e[1]e[2] -> -k}
 
 
-(* Added in May, 2007 *)
+
+(* 2023: Update graphics for newer versions of mathematica *)
 (* Draw functions *)
 
 (* Begin GAarrow section
    This function generates the arrow of a vector *)
-(*
-GAarrow[p_, color_] := Module[{sc,elms,cone,arrow,t,mat}, {
-   (*Scale factor*)
-   sc = Sqrt[p[[1]]^2 + p[[2]]^2 + p[[3]]^2]/2,
-   (* The code for creating the cone was taken from the book Mathematica Graphics: Techniques and Applications. *)
-   mat[1] = Sin[t]*(e[1]/14) + Cos[t]*(e[2]/14),
-   mat[2] = Sin[t + 0.25]*(e[1]/14) + Cos[t + 0.25]*(e[2]/14),
-   mat[3] = e[3]/5,
-   (*Rotates, translates and create the cone*)
-   If[OuterProduct[ToBasis[p],e[3]]===0,
-       cone=Table[Array[ToVector[mat[#],3]&,3]+Array[p-ToVector[mat[3],3]&,3],{t,0.25,2*Pi,0.25}],
-       elms=Array[sc*ToVector[Grade[Rotation[mat[#],e[3],ToBasis[p]],1],3]&,3];
-       cone=Table[elms+Array[p-elms[[3]]&,3],{t,0.25,2*Pi,0.25}]], 
-   (*Creates the 3D primitive graphic for the cone*)
-   arrow = Graphics3D[{FaceForm[color], EdgeForm[], Polygon /@ cone},Lighting->Automatic]}; arrow]
+
+GAarrow[arrowHeadPosition_List, color_] /; MatchQ[Length[arrowHeadPosition],3] := Graphics3D[{color, Arrow[{{0, 0, 0}, arrowHeadPosition}]}]
 
 (* Begin DrawVec section. This function plots a tri-vector *)
-DrawVec[x_] := Module[{points, graph, color, aux, arrow}, 
-   {cc := Random[Real, {0, 1}], color = RGBColor[cc, cc, cc], 
-     points = ToVector[x, 3], arrow = GAarrow[points, color], 
-     aux = Graphics3D[{color, Line[{{0, 0, 0}, points}]
-        }], graph = {{arrow, aux}}}; {graph, scalar}]
+DrawVec[multivector_] := Module[
+	{points, graph, color, aux, arrow}, 
+	{
+		cc := Random[Real, {0, 1}], 
+		color = RGBColor[cc, cc, cc],  (* do we want to use random colors for a palette? I think it's better to choose a palette which is also colorblind compatible*)
+		points = ToVector[multivector, 3], 
+		arrow = GAarrow[points, color], 
+		aux = Graphics3D[{color, Line[{{0, 0, 0}, points}]}],
+		graph = {{arrow, aux}}
+	}; 
+	{graph} (* scalar is not defined/evaluated anywhere?*)
+]
 
 (* Begin DrawBiVec section. This function plots a bi-vector *)
-DrawBiVec[x_] := If[Length[x] > 3, Message[DrawBiVec::"Out of Dimension", x]; 
-     $Failed, f]; 
-DrawBiVec[x_] := Module[{xx, i, flag, pos, q, d, theta, rot1, rot2, 
-    rot, r, graph, fac, t1, t2, w, cc}, 
-   {cc := Random[Real, {-1, 1}], If[Head[x] === Plus, 
-      {xx = x, For[i = 1, i <= Length[x], b[i] = x[[i]]; i++], 
-       If[Length[x] == 3, flag = 1, flag = 0], For[i = 1, i <= Length[x], 
-        {If[Length[b[i]] > 2, {scalar[i] = b[i][[1]], b[i] = Delete[b[i], 1], 
-            c[i] = b[i] /. e[s_]*e[t_] -> {s, t}}, {scalar[i] = 1, 
-            c[i] = b[i] /. e[s_]*e[t_] -> {s, t}}]}; i++], 
-       If[c[1][[1]] === c[2][[1]], {pos = 1, q = {{1, 1, 0}, {-1, 1, 0}, 
-           {-1, -1, 0}, {1, -1, 0}}}, pos = pos], If[c[1][[2]] === c[2][[1]], 
-        {pos = 2, q = {{1, 1, 0}, {-1, 1, 0}, {-1, -1, 0}, {1, -1, 0}}}, 
-        pos = pos], If[c[1][[2]] === c[2][[2]], 
-        {pos = 3, q = {{1, 0, 1}, {-1, 0, 1}, {-1, 0, -1}, {1, 0, -1}}}, 
-        pos = pos], d = Insert[{0, 0}, 1, pos], 
-       theta = ArcTan[scalar[2]/scalar[1]], 
-       fac = Sqrt[scalar[1]^2 + scalar[2]^2], 
-       rot1 = {Cos[theta], -Sin[theta]}, rot2 = {Sin[theta], Cos[theta]}, 
-       rot = Insert[{Insert[rot1, 0, pos], Insert[rot2, 0, pos]}, d, pos], 
-       r = fac*q . rot, If[flag == 1, {theta = ArcTan[scalar[3]/fac]; 
-          fac = Sqrt[fac^2 - scalar[3]^2]; rot = {{Cos[theta], -Sin[theta], 
-             0}, {Sin[theta], Cos[theta], 0}, {0, 0, 1}}, r = fac*r . rot}, 
-        r = r], graph = Graphics3D[{Polygon[r], Text[xx, {0, 0, 0}, 
-           Background -> GrayLevel[1]]}]}, {xx = x, If[NumberQ[fac = x[[1]]], 
-        w = Drop[x, 1], {w = x, fac = 1}], t1 = w[[1]] /. e[s_] -> s, 
-       t2 = w[[2]] /. e[h_] -> h, If[t2 < 4, {If[t1 == 1 && t2 == 2, pos = 3, 
-          Null], If[t1 == 2 && t2 == 3, pos = 1, Null], 
-         If[t1 == 1 && t2 == 3, pos = 2, Null], fac = Abs[fac], 
-         r = {fac*Insert[{1, 1}, 0, pos], fac*Insert[{-1, 1}, 0, pos], 
-           fac*Insert[{-1, -1}, 0, pos], fac*Insert[{1, -1}, 0, pos]}, 
-         graph = Graphics3D[{Polygon[r], Text[xx, {0, 0, 0}, 
-             Background -> GrayLevel[1]]}]}]}]}; graph]
+DrawBiVec[x_] := If[Length[x] > 3, Message[DrawBiVec::"Out of Dimension", x]; $Failed, f]; 
+
+
+DrawBiVec[x_] := Module[
+	{flag, pos, baseIndexes, q, d, theta, rot1, rot2, rot, r, graph, fac, t1, t2, w, scalar=ConstantArray[0,Length[x]], b=ConstantArray[0,Length[x]], c=ConstantArray[0,Length[x]],z}, 
+	If[Head[x] === Plus, 
+		(
+			If[Length[x] == 3, 
+				flag = 1, 
+				flag = 0
+			];
+			
+			z=x /. Plus -> List/.Times->List->e[s_]->s;
+			Table[If[Length[z[[i]]]>2,
+				scalar[[i]]=z[[i,1]]; c[[i]]=z[[i,2;;]],
+				scalar[[i]]=1; c[[i]]=z[[i]]],{i,1,Length[z]}];
+			{pos,q}=Which[c[[1]][[1]]===c[[2]][[1]],
+				{1,{{1,1,0},{-1,1,0},{-1,-1,0},{1,-1,0}}},
+				c[[1]][[2]]===c[[2]][[1]],
+				{2,{{1,1,0},{-1,1,0},{-1,-1,0},{1,-1,0}}},
+				c[[1]][[2]]===c[[2]][[2]],
+				{3,{{1,0,1},{-1,0,1},{-1,0,-1},{1,0,-1}}}
+			];
+			
+			d = Insert[{0, 0}, 1, pos]; 
+			theta = ArcTan[scalar[[2]]/scalar[[1]]];
+			fac = Sqrt[scalar[[1]]^2 + scalar[[2]]^2]; 
+			rot1 = {Cos[theta], -Sin[theta]};
+			rot2 = {Sin[theta], Cos[theta]}; 
+			rot = Insert[{Insert[rot1, 0, pos], Insert[rot2, 0, pos]}, d, pos];
+			r = fac*q . rot;
+			If[flag == 1, 
+				{theta = ArcTan[scalar[[3]]/fac];
+				fac = Sqrt[fac^2 - scalar[[3]]^2];
+				rot = {
+					{Cos[theta], -Sin[theta], 0}, 
+					{Sin[theta], Cos[theta], 0}, 
+					{0, 0, 1}}, 
+				r = fac*r . rot},
+				r=r
+			];
+			graph = Graphics3D[{
+				Polygon[r], 
+				Text[
+					x, 
+					{0, 0, 0},
+					Background -> GrayLevel[1]
+				]
+				}
+			];
+		), 
+		(
+			If[NumberQ[fac = x[[1]]],
+				w = Rest[x], 
+				w = x;
+				fac = 1
+			]; 
+			t1 = w[[1]] /. e[s_] -> s;
+			t2 = w[[2]] /. e[h_] -> h; 
+			If[t2 < 4, 
+				pos=Which[t1==1&&t2==2,
+					3,
+					t1==2&&t2==3,
+					1,
+					t1==1&&t2==3,
+					2];
+				fac = Abs[fac];
+				r = {
+					fac*Insert[{1, 1}, 0, pos], 
+					fac*Insert[{-1, 1}, 0, pos],
+					fac*Insert[{-1, -1}, 0, pos],
+					fac*Insert[{1, -1}, 0, pos]
+				};				
+				graph = Graphics3D[
+					{
+						Polygon[r],
+						Text[x, {0, 0, 0}, Background -> GrayLevel[1]]
+					}
+				]
+			]
+		)
+	];
+	graph
+]
 
 (* Begin DrawTriVec section. This function plots a tri-vector *)
-DrawTriVec[y_] := Module[{xx, x, fac, t, p, graph}, 
-   {xx = x = y, x = List @@ Distribute[x], If[NumberQ[fac = x[[1]]], 
-      x = Drop[x, 1], {x = x, fac = 1}], t = x[[3]] /. e[s_] -> s, 
-     If[t < 4, {fac = Abs[fac], p = fac*{{-1, -1, -1}, {1, -1, -1}, 
-          {1, 1, -1}, {-1, 1, -1}, {-1, -1, -1}, {-1, -1, 1}, {1, -1, 1}, 
-          {1, 1, 1}, {-1, 1, 1}, {-1, -1, 1}, {1, -1, 1}, {1, -1, -1}, 
-          {1, 1, -1}, {1, 1, 1}, {-1, 1, 1}, {-1, 1, -1}, {1, -1, 1}, 
-          {1, -1, -1}, {-1, 1, 1}, {-1, -1, 1}, {1, 1, -1}, {1, 1, 1}, 
-          {-1, -1, -1}}, graph = Graphics3D[{
-          RGBColor[0, 0, 1], Line[p]}]}]}; graph]
+DrawTriVec[trivector_] := Module[
+	{listedArgument, factor, t, p, graph, trivactorComponents}, 
+	listedArgument = List @@ Distribute[trivector];
+	If[NumberQ[First[listedArgument]],
+		(
+			factor = First[listedArgument];
+			trivactorComponents = Drop[listedArgument, 1];
+		),
+		(
+			factor = 1;
+			trivactorComponents = listedArgument;
+		)
+	];
+	t = trivactorComponents[[3]] /. e[s_] -> s;
+	If[t < 4,
+		( 
+			factor = Abs[factor];
+			p = factor* {
+				{-1, -1, -1},
+				{1, -1, -1}, 
+				{1, 1, -1}, 
+				{-1, 1, -1}, 
+				{-1, -1, -1}, 
+				{-1, -1, 1}, 
+				{1, -1, 1}, 
+				{1, 1, 1}, 
+				{-1, 1, 1}, 
+				{-1, -1, 1},
+				{1, -1, 1}, 
+				{1, -1, -1},
+				{1, 1, -1},
+				{1, 1, 1},
+				{-1, 1, 1}, 
+				{-1, 1, -1}, 
+				{1, -1, 1}, 
+				{1, -1, -1}, 
+				{-1, 1, 1}, 
+				{-1, -1, 1}, 
+				{1, 1, -1}, 
+				{1, 1, 1}, 
+				{-1, -1, -1}
+			}; 
+			graph = Graphics3D[{RGBColor[0, 0, 1], Line[p]}]
+		)
+	];
+	graph
+]
+
+
 
 (* Begin Draw section *)
-GADraw[x_, v_:{ViewPoint -> {1.3, -2.4, 2}}] := 
-  Module[{vec, bivec, graphvec, graphbivec, graph, msg},
-  {msg = Grade[x, 0], vec = Grade[x, 1], bivec = Grade[x, 2], trivec = Grade[x, 3],
-  If[vec === 0, If[bivec === 0, graph = graph, 
-       {graphbivec = DrawBiVec[bivec], graph = {graphbivec}}], 
-      If[bivec === 0, {graphvec = DrawVec[vec][[1]], graph = {graphvec}}, 
-       {graphbivec = DrawBiVec[bivec], graphvec = DrawVec[vec][[1]], 
-        graph = {graphvec, graphbivec}}]],
-  If[trivec === 0, graph = graph, 
-      {len = Length[graph], If[len > 0, graph = Append[graph, 
-          DrawTriVec[trivec]], graph = DrawTriVec[trivec]]}], 
-     eje1 = "\!\(e\_1\)", eje2 = "\!\(e\_2\)", eje3 = "\!\(e\_3\)", 
-     ax = {eje1, eje2, eje3}, Null};
-  Show[graph, Axes -> True, 
-     AxesLabel -> ax, TextStyle -> {FontFamily -> "Times", FontSize -> 12}, 
-     AxesEdge -> {{-1, -1}, {1, -1}, {-1, -1}}, (*ImageSize -> 300, *)
-     PlotRange -> All, v, PlotLabel -> StyleForm[TraditionalForm[
-       "Scalar = " <> ToString[msg]]]]]
-       
-*)
+GADraw[x_, v_:{ViewPoint -> {1.3, -2.4, 2}}] := Module[
+	{
+		msg = Grade[x, 0],
+		vec = Grade[x, 1],
+		bivec = Grade[x, 2],
+		trivec = Grade[x, 3], 
+		graph
+	},
+	graph = 
+		Join[
+			{
+			If[vec === 0, {}, DrawVec[vec]],
+			If[bivec === 0, {}, DrawBiVec[bivec]],
+			If[trivec === 0, {}, DrawTriVec[trivec]]
+			}
+		];
+	graph = Flatten[graph, 1];
+	eje1 = "\!\(e\_1\)";
+	eje2 = "\!\(e\_2\)";
+	eje3 = "\!\(e\_3\)";
+	ax = {eje1, eje2, eje3};
+	Show[
+		graph, 
+		Axes -> True,
+		AxesLabel -> ax, 
+		TextStyle -> {
+			FontFamily -> "Times", 
+			FontSize -> 12
+			}, 
+			AxesEdge -> {{-1, -1}, {1, -1}, {-1, -1}}, (*ImageSize -> 300, *)
+			PlotRange -> All, 
+			v, 
+			PlotLabel -> StyleForm[TraditionalForm["Scalar = " <> ToString[msg]]]
+	]
+]
 
 Protect[Evaluate[protected]]   (* Restore protection of the functions *)
 
