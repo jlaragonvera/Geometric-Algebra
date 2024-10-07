@@ -6,7 +6,7 @@
 
 (* :Summary:
        This file contains declarations for calculations with Clifford
-       algebra of a n-dimensional vector space.  When loaded,
+       algebra of an n-dimensional vector space.  When loaded,
        vectors (and multivectors) must be given as linear combinations
        of a canonical (orthonormal basis) that are denoted by
        e[1],e[2],..,e[n].
@@ -20,10 +20,11 @@
        With the exception of the function Dual[m,n], it is not
        neccesary to define the dimension of the vector space, it
        is calculated automatically by the function dimensions[ ].
-       The signature of the bilinear form is set by 
-       $SetSignature, sets the indices (p,q,s) of the bilinear
-       form (s is the degeneracy index) if not specified, the 
-       default value is {20,20,20} *)
+       The signature of the bilinear form is set by $SetSignature,
+       which sets the indices (p,q,s) of the bilinear form (s is
+       the degeneracy index). If not specified, the default value
+       is {20,0} corresponding to (20,0,s), s still unspecified.
+       But if i>20, we assume that GeometricProduct[e[i],e[i]]=0. *)
 
 
 	   
