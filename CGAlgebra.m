@@ -299,12 +299,12 @@ Involution[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]]] := (-1)^Le
 Involution[x_ + y_] := Involution[x] + Involution[y]
 
 (* Magnitude returns the magnitude v^2 of a multivector v *)
-Magnitude[x_] := Sqrt[Grade[GeometricProduct[Reversion[x], x], 0]]
+Magnitude[x_] := Grade[GeometricProduct[Reversion[x], x], 0]
 
 (* MultivectorInverse returns the inverse of a multivector, if it exists *)
 MultivectorInverse[_] := $Failed
 MultivectorInverse[x_] := MultivectorInverse[Expand[x]]                 /; x =!= Expand[x]
-MultivectorInverse[x_] := Simplify[Reversion[x] / Magnitude[x]^2 ]      /; Magnitude[x] =!= 0
+MultivectorInverse[x_] := Simplify[Reversion[x] / Magnitude[x]]      /; Magnitude[x] =!= 0
 
 (* I5 = pseudoscalar; I5i = the inverse of I5. Dorst, Fontijne, Mann, 13.3.3 *)
  I5 := OuterProduct[e[0],OuterProduct[e[1],e[2],e[3]],e[\[Infinity]]]
