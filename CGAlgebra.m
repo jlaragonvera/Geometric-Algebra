@@ -42,6 +42,12 @@
           To fix this, the package was refactored and now works in R^{4,1}, with the basis
           {e1,e2,e3,e4,e5}, and using the changes of variables e4 = e0 - einf/2, e5 = e0 + einf/2
           and e0 = (e4 + e5)/2, einf = e5 - e4. 
+   Revision (April, 2025) J.L. Aragon and A. Ortiz Duran
+        - Magnitude[] corrected to use the proper squared norm form.
+        - Rotation[] updated, as it relied on the norm definition, added GAVectorQ[] as a condition.
+	- MultivectorInverse[] updated, as it relied on the norm definition.
+	- GAVectorQ[] added, new function to check if an input is a vector in ℝ³.
+
 *)
 
 (* :Keywords: Clifford algebra, geometric algebra, conformal model *)
@@ -104,6 +110,8 @@ Rotation::usage = "Rotation[x,a,b,theta] Rotates the vector x by an angle theta 
 along the plane defined by a and b. The sense of the rotation is from a to b.
 If no theta is given, the default value is the  angle between a and b."
 
+GAVectorQ::usage ="GAVectorQ[x] checks whether the geometric algebra vector x lies in ℝ^3"
+
 
 Begin["`Private`"] (* Begin Private Context *) 
 
@@ -121,6 +129,9 @@ GradeQ[a_, r_?NumberQ] := If[r === 0, True, False]                 /; FreeQ[a, e
 GradeQ[e[i__], r_?NumberQ] := If[Length[{i}] === r, True , False]
 GradeQ[(a_: 1) e[i__], r_?NumberQ] := GradeQ[e[i], r]               /; FreeQ[a, e[_]]
 GradeQ[x_Plus, r_?NumberQ] := And @@ (GradeQ[#, r] & /@ Apply[List, x])
+
+(* GAVectorQ checks whether a geometric algebra vector lies in ℝ^3*)
+GAVectorQ[x_] := (FreeQ[x, e[0]]&&FreeQ[x, e[\[Infinity]]])
 
 (* MultiplicationTable returns the multiplication table for Clifford products *)
 MultiplicationTable[e_] := Grid[Transpose[Insert[Transpose[Prepend[Table[e[i, j], {i,{0,1,2,3,\[Infinity]}}, {j, {0,1,2,3,\[Infinity]}}], 
@@ -299,12 +310,12 @@ Involution[(a_: 1) e[i__ /; SubsetQ[{0, 1, 2, 3, \[Infinity]}, {i}]]] := (-1)^Le
 Involution[x_ + y_] := Involution[x] + Involution[y]
 
 (* Magnitude returns the magnitude v^2 of a multivector v *)
-Magnitude[x_] := Sqrt[Grade[GeometricProduct[Reversion[x], x], 0]]
+Magnitude[x_] := Grade[GeometricProduct[Reversion[x], x], 0]
 
 (* MultivectorInverse returns the inverse of a multivector, if it exists *)
 MultivectorInverse[_] := $Failed
 MultivectorInverse[x_] := MultivectorInverse[Expand[x]]                 /; x =!= Expand[x]
-MultivectorInverse[x_] := Simplify[Reversion[x] / Magnitude[x]^2 ]      /; Magnitude[x] =!= 0
+MultivectorInverse[x_] := Simplify[Reversion[x] / Magnitude[x] ]      /; Magnitude[x] =!= 0
 
 (* I5 = pseudoscalar; I5i = the inverse of I5. Dorst, Fontijne, Mann, 13.3.3 *)
  I5 := OuterProduct[e[0],OuterProduct[e[1],e[2],e[3]],e[\[Infinity]]]
@@ -317,10 +328,11 @@ Dual[x_] := -InnerProduct[x, I5]
 along the plane defined by a and b. The sense of the rotation is from a to b.
 If no theta is given, the default value is the  angle between a and b.
 *)
+Rotation[_] := $Failed
 Rotation[x_, a_, b_, angle_:Automatic] := Module[{plane=OuterProduct[a, b]},
     If[angle === Automatic, theta=VectorAngle[ToVector[a],ToVector[b]], theta=angle];
-	Return[GFactor[GeometricProduct[Cos[theta/2] - (plane/Magnitude[plane])*Sin[theta/2], x, Cos[theta/2] + (plane/Magnitude[plane])*Sin[theta/2]]]]
-    ]  /;  GradeQ[x,1] && GradeQ[a,1] && GradeQ[b,1]
+	Return[GFactor[GeometricProduct[Cos[theta/2] - (plane/Sqrt[Magnitude[plane]])*Sin[theta/2], x, Cos[theta/2] + (plane/Sqrt[Magnitude[plane]])*Sin[theta/2]]]]
+    ]  /;  GradeQ[x,1] && GradeQ[a,1] && GradeQ[b,1]&&GAVectorQ[a]&&GAVectorQ[b]
 
 (* definitions for system functions *)
 SetAttributes[e,NHoldAll]
@@ -332,6 +344,6 @@ End[] (* End Private Context *)
 
 (* Protecting exported symbols *)
 Protect[e, GradeQ, MultiplicationTable, GFactor, GeometricProduct, Grade, OuterProduct, InnerProduct, Reversion, 
-	     Involution, Magnitude, MultivectorInverse, I5, I5i, Dual]
+	     Involution, Magnitude, MultivectorInverse, I5, I5i, Dual,GAVectorQ]
 
 EndPackage[]
