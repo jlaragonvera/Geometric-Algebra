@@ -68,6 +68,11 @@
                 - The last function of the Section "The RELATIONS of the clifford algebra"
                   didn't work well with signatures q != 0.
                   It was fixed and improved.
+		  
+    Revision (May, 2025) J.L. Aragon
+        Changes: 
+                - $FirstIndex didn't work properly in some cases.
+                  There was a problem in the last relation of the Clifford algebra. It was fixed.
  *)
 
 (* :References: 
@@ -245,7 +250,7 @@ e[i_Integer, j__Integer] := (-e[])^((Length[{i, j}] - 1)/2) e[i]  /; i == j && i
 e[i_Integer, j__Integer] := 0                                     /; i == j && Max[{i, j}] > (Plus@@$SetSignature)+$FirstIndex-1 && AllTrue[{i, j}, NonNegative]
 e[i_Integer, j_Integer] := -e[j,i]                                /; i != j && i > j  && AllTrue[{i, j}, NonNegative]
 e[i__Integer] := Signature[Ordering[{i}]] Apply[e,Sort[{i}]]      /; ! OrderedQ[{i}] && AllTrue[{i}, NonNegative]
-e[i__Integer] := (Times @@ (Apply[e, Gather[{i}], 1] /. e[_] -> 1))*e @@ (Cases[Apply[e, Gather[{i}], 1], Except[_Integer]] /. (e[x_] | a_ e[x_]) -> x) /;  OrderedQ[{i}] && ! DuplicateFreeQ[{i}]  && AllTrue[{i}, Positive]
+e[i__Integer] := (Times @@ (Apply[e, Gather[{i}], 1] /. e[_] -> 1))*e @@ (Cases[Apply[e, Gather[{i}], 1], Except[_Integer]] /. (e[x_] | a_ e[x_]) -> x) /;  OrderedQ[{i}] && ! DuplicateFreeQ[{i}]  && AllTrue[{i}, # >= 0 &]
 
 (* Begin Geometric Product Section *)
 GeometricProduct[ _] := $Failed
