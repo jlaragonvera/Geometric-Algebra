@@ -32,7 +32,7 @@ The geometric product
 
 yields:
 
-     10 + a e[0] + 2a e[1] + a e[&#8734;] + 5 e[0,1] - 5 e[1,&infin;] + 2 e[2,3] + e[0,1,2,3] - e[1,2,3,&infin;]
+     10 + a e[0] + 2a e[1] + a e[\[Infinity]] + 5 e[0,1] - 5 e[1,\[Infinity]] + 2 e[2,3] + e[0,1,2,3] - e[1,2,3,\[Infinity]]
 
 The inner product
 
