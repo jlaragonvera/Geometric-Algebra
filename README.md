@@ -8,7 +8,7 @@
 
 This package contains declarations for calculations with Conformal
 Geometric Algebra. Basis vectors {e<sub>0</sub>, e<sub>1</sub>, e<sub>2</sub>, e<sub>3</sub>, e<sub>&infin;</sub>} are 
-denoted by e[0], e[1], e[2], e[3], e[Infinity]. Geometric products
+denoted by e[0], e[1], e[2], e[3], e[&infin;]. Geometric products
 of basis elements are denoted as e\[0,1,2\] (= e<sub>0</sub> e<sub>1</sub> e<sub>2</sub>), etc.
    
 The results of any calculation is given in terms of the geometric product
