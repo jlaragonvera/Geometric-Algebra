@@ -91,3 +91,9 @@ the default value is:
 
          $SetSignature={20,0}        
 
+In some fields, such as Dirac algebra, it is common for the first element of the algebra 
+to be denoted as e[0]. This can be achieved with 
+
+         $FirstIndex=0
+         
+Thanks to Brett Carlson.
