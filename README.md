@@ -96,4 +96,4 @@ to be denoted as e[0]. This can be achieved with
 
          $FirstIndex=0
          
-Thanks to Brett Carlson.
+The default value is $FirstIndex=1 (thanks to Brett Carlson).
