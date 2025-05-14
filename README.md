@@ -13,8 +13,8 @@ of basis elements are denoted as e\[0,1,2\] (= e<sub>0</sub> e<sub>1</sub> e<sub
    
 The results of any calculation is given in terms of the geometric product
 of basis elements, that is, the outer (Grassman) product of basis
-elements or multivectors is calculated by using OuterProduct[] and the
-output is given in terms of geometric product of basis vectors.
+elements or multivectors is calculated by using OuterProduct[] and <strong>the
+output is given in terms of geometric product of basis vectors</strong>.
         
 Examples:
 
